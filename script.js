@@ -68,7 +68,6 @@ function manejarChat(data) {
 
   hablar(`${data.nombre}: ${data.texto}`);
 }
-
 function manejarJoin(data) {
   let col   = document.getElementById('col-izq');
   let aviso = document.createElement('div');
@@ -112,6 +111,22 @@ function manejarGift(data) {
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
 
   hablar(`¡Gracias ${data.nombre} por ${data.cantidad} ${data.regalo}! ¡Eres un crack!`);
+}
+
+// ─── TABS MÓVIL ────────────────────────────────────────────────────────────────
+function cambiarTab(tab, btn) {
+  // Ocultar todas las columnas
+  document.getElementById('col-izq').classList.remove('tab-visible');
+  document.getElementById('col-chat').classList.remove('tab-visible');
+  document.getElementById('col-juegos').classList.remove('tab-visible');
+
+  // Mostrar la seleccionada
+  const ids = { izq: 'col-izq', chat: 'col-chat', juegos: 'col-juegos' };
+  document.getElementById(ids[tab]).classList.add('tab-visible');
+
+  // Marcar botón activo
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
 }
 
 // ─── AYUDA ─────────────────────────────────────────────────────────────────────

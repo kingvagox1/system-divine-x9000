@@ -571,3 +571,174 @@ button:active { transform: scale(0.97); }
   line-height: 1.5;
   font-family: Arial, sans-serif;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — MÓVIL
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tabs de navegación móvil (ocultas en desktop) */
+.tabs-movil {
+  display: none;
+}
+
+@media (max-width: 700px) {
+
+  body {
+    overflow: auto;
+    padding: 4px;
+  }
+
+  :root { --tam: 15px; }
+
+  .sistema-madre {
+    height: auto;
+    min-height: 100dvh;
+    border-radius: 12px;
+    padding: 8px;
+    gap: 6px;
+    overflow: visible;
+  }
+
+  /* ── Cabecera compacta ── */
+  .cabecera {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 6px 10px;
+  }
+
+  .cab-titulo {
+    font-size: calc(var(--tam) + 2px);
+    letter-spacing: 1px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .cab-info {
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .cab-controles {
+    align-self: flex-end;
+  }
+
+  /* ── Panel TikTok ── */
+  .panel-tiktok {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .panel-tiktok input {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1;
+  }
+
+  /* ── Barra diamantes ── */
+  .barra-diamantes-wrap {
+    font-size: 10px;
+  }
+
+  /* ── Tabs de navegación ── */
+  .tabs-movil {
+    display: flex;
+    gap: 4px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 12px;
+    padding: 4px;
+    flex-shrink: 0;
+  }
+
+  .tab-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(0,240,255,0.2);
+    color: rgba(255,255,255,0.5);
+    font-size: 12px;
+    padding: 7px 4px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .tab-btn:hover,
+  .tab-btn:active {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .tab-btn.activo {
+    background: linear-gradient(135deg, var(--azul), var(--morado));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 0 10px var(--azul);
+  }
+
+  /* ── Zona central: una columna a la vez ── */
+  .zona-central {
+    flex-direction: column;
+    overflow: visible;
+    gap: 0;
+  }
+
+  .columna {
+    display: none;
+    max-height: 55vh;
+    overflow-y: auto;
+    border-radius: 12px;
+  }
+
+  .columna.tab-visible {
+    display: flex;
+  }
+
+  /* La columna de juegos no tiene max-width en móvil */
+  .col-juegos {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .pantalla-3d {
+    min-height: 140px;
+    font-size: clamp(16px, 8vw, 40px);
+  }
+
+  .juegos-botones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .juegos-botones button {
+    width: 100%;
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+
+  /* ── Barra de voz ── */
+  .barra-voz {
+    font-size: 11px;
+    white-space: normal;
+  }
+
+  /* ── Botón ayuda más grande en móvil ── */
+  .btn-ayuda {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    bottom: 14px;
+    right: 14px;
+  }
+
+  /* ── Modal ayuda ── */
+  .ayuda-modal {
+    width: 95%;
+    padding: 20px 16px 18px;
+    max-height: 90vh;
+  }
+
+}

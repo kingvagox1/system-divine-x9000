@@ -58,23 +58,30 @@
       </div>
     </div>
 
+    <!-- ── TABS MÓVIL ── -->
+    <div class="tabs-movil">
+      <button class="tab-btn activo" onclick="cambiarTab('izq', this)">👥 Actividad</button>
+      <button class="tab-btn"        onclick="cambiarTab('chat', this)">💬 Chat</button>
+      <button class="tab-btn"        onclick="cambiarTab('juegos', this)">🎮 Juegos</button>
+    </div>
+
     <!-- ── ZONA CENTRAL ── -->
     <div class="zona-central">
 
       <!-- Columna izquierda: llegadas, follows, gifts -->
-      <div class="columna" id="col-izq">
+      <div class="columna tab-visible" id="col-izq">
         <h2>👥 ACTIVIDAD</h2>
       </div>
 
       <!-- Columna central: chat -->
-      <div class="columna col-chat-wrap" id="col-chat">
+      <div class="columna" id="col-chat">
         <h2>💬 CHAT LIVE
           <span class="comandos-hint">!dado · !magia · !pelea · !ruleta · !8ball · !sorteo</span>
         </h2>
       </div>
 
       <!-- Columna derecha: juegos / pantalla -->
-      <div class="columna col-juegos">
+      <div class="columna col-juegos" id="col-juegos">
         <h2>🎮 JUEGOS</h2>
         <div class="pantalla-3d" id="pantalla-juegos">✨ LISTO ✨</div>
         <div class="juegos-botones">
