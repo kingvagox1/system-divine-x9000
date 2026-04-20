@@ -12,7 +12,7 @@ app.use(express.static(__dirname));
 
 // ─── Configuración ─────────────────────────────────────────────────────────────
 const TIKTOK_USER = process.env.TIKTOK_USER || 'PON_TU_USUARIO_AQUI';
-const PORT        = process.env.PORT        || 3000;
+const PORT = process.env.PORT || 8080;
 
 // ─── Conexión a TikTok Live ────────────────────────────────────────────────────
 let tiktokConnection = null;
