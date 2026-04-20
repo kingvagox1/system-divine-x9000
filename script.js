@@ -450,8 +450,34 @@ function juegoDado(user) {
 }
 
 function juegoMagia(user) {
-  const frases = ['✨ FUTURO BRILLANTE ✨','🔮 SUERTE MAESTRA 🔮','🤡 CUIDADO 🤡','👑 REY 👑','💀 PELIGRO 💀','🌟 ESTRELLA 🌟'];
-  const res    = frases[Math.floor(Math.random() * frases.length)];
+  const frases = [
+    '✨ FUTURO BRILLANTE ✨',
+    '🔮 SUERTE MAESTRA 🔮',
+    '🤡 CUIDADO 🤡',
+    '👑 REY 👑',
+    '💀 PELIGRO 💀',
+    '🌟 ESTRELLA 🌟',
+    '🍀 MUCHA SUERTE 🍀',
+    '🔥 ERES FUEGO 🔥',
+    '💎 DIAMANTE PURO 💎',
+    '🐍 TRAICIÓN CERCA 🐍',
+    '🦁 ERES UN LEÓN 🦁',
+    '🌈 DÍAS ÉPICOS VIENEN 🌈',
+    '💸 EL DINERO LLEGA 💸',
+    '😈 CUIDADO CON LOS ENVIDIOSOS 😈',
+    '🏆 CAMPEÓN TOTAL 🏆',
+    '🌙 NOCHE MÁGICA 🌙',
+    '⚡ PODER ABSOLUTO ⚡',
+    '🎭 TODO ES UN JUEGO 🎭',
+    '🕊️ PAZ Y AMOR 🕊️',
+    '🤑 RIQUEZA EXTREMA 🤑',
+    '🧿 PROTEGIDO 🧿',
+    '🫀 AMOR VERDADERO CERCA 🫀',
+    '🚀 AL INFINITO 🚀',
+    '🪄 MAGIA PURA 🪄',
+    '👻 ALGO RARO SE ACERCA 👻',
+  ];
+  const res = frases[Math.floor(Math.random() * frases.length)];
   mostrarPantalla(`🔮 ${res}`);
   hablar(`Consultando oráculo para ${user}... ${res}`);
 }
