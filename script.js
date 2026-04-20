@@ -91,7 +91,7 @@ function manejarFollow(data) {
 
   let pant = document.getElementById('pantalla-juegos');
   pant.innerHTML = `❤️ FOLLOW<br>@${data.nombre} ❤️`;
-  pant.style.fontSize  = 'calc(var(--tam) * 2.5)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
 
@@ -107,7 +107,7 @@ function manejarGift(data) {
 
   let pant = document.getElementById('pantalla-juegos');
   pant.innerHTML = `🎁 ${data.regalo}<br>x${data.cantidad}`;
-  pant.style.fontSize  = 'calc(var(--tam) * 3)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
 
@@ -151,7 +151,7 @@ function juegoDado(user) {
   let num  = Math.floor(Math.random() * 6) + 1;
   let pant = document.getElementById('pantalla-juegos');
   pant.innerHTML       = `🎲 ${num} 🎲`;
-  pant.style.fontSize  = 'calc(var(--tam) * 4.5)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
   hablar(`¡Tiró el dado ${user} y salió el número ${num}!`);
@@ -162,7 +162,7 @@ function juegoMagia(user) {
   let res    = frases[Math.floor(Math.random() * frases.length)];
   let pant   = document.getElementById('pantalla-juegos');
   pant.innerHTML       = `🔮 ${res} 🔮`;
-  pant.style.fontSize  = 'calc(var(--tam) * 3)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
   hablar(`Consultando oráculo para ${user}... ${res}`);
@@ -174,7 +174,7 @@ function juegoPelea(user) {
   let gan = p1 > p2 ? user : "EL SISTEMA";
   let pant = document.getElementById('pantalla-juegos');
   pant.innerHTML       = `⚔️ ${p1} VS ${p2} ⚔️<br>🏆 ${gan} 🏆`;
-  pant.style.fontSize  = 'calc(var(--tam) * 2)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.8s ease-out', 10);
   hablar(`Batalla épica! ${user} tiene ${p1} de poder. Ganó... ${gan}!`);
@@ -185,7 +185,7 @@ function juegoRuleta(user) {
   let sale    = premios[Math.floor(Math.random() * premios.length)];
   let pant    = document.getElementById('pantalla-juegos');
   pant.innerHTML       = `🔄 ${sale} 🔄`;
-  pant.style.fontSize  = 'calc(var(--tam) * 3)';
+  pant.style.fontSize  = '';
   pant.style.animation = 'none';
   setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
   hablar(`Girando ruleta para ${user}... salió: ${sale}!`);
