@@ -125,6 +125,14 @@ io.on('connection', socket => {
   socket.on('cambiarUsuario', username => {
     conectarTikTok(username.replace('@', ''));
   });
+  socket.on('desconectar', () => {
+    if (tiktokConnection) {
+      tiktokConnection.disconnect();
+      tiktokConnection = null;
+      console.log('🔌 Desconectado manualmente');
+      io.emit('estado', { conectado: false, error: null });
+    }
+  });
 });
 
 // ─── Arrancar servidor ────────────────────────────────────────────────────────

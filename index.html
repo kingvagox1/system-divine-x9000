@@ -10,40 +10,53 @@
 </head>
 <body>
 
-  <!-- PARTÍCULAS DE FONDO -->
+  <!-- ESTRELLAS DE FONDO -->
   <canvas id="particulas"></canvas>
 
-  <div class="sistema-madre">
+  <div class="sistema-madre" id="sistema-madre">
 
     <!-- ── CABECERA ── -->
     <div class="cabecera">
-      <div class="cab-titulo">⚡ SYSTEM DIVINE X-9000 ⚡</div>
+      <div class="cab-izq">
+        <img id="avatar-streamer" class="avatar" src="" alt="" style="display:none">
+        <div class="cab-titulo" id="cab-titulo">⚡ SYSTEM DIVINE X-9000 ⚡</div>
+      </div>
       <div class="cab-info">
         <span id="estado-dot">🔴</span>
         <span id="estado-txt">OFFLINE</span>
         &nbsp;|&nbsp;
-        👁️ <span id="viewers">0</span> viewers
+        👁️ <span id="viewers">0</span>
         &nbsp;|&nbsp;
-        ❤️ <span id="total-likes">0</span> likes
+        ❤️ <span id="total-likes">0</span>
         &nbsp;|&nbsp;
-        💎 <span id="total-diamantes">0</span> diamantes
+        💎 <span id="total-diamantes">0</span>
       </div>
       <div class="cab-controles">
-        🔍
+        <!-- Selector de tema -->
+        <div class="temas">
+          <button class="btn-tema activo" data-tema="azul"   onclick="cambiarTema('azul',this)"   title="Azul">🔵</button>
+          <button class="btn-tema"        data-tema="verde"  onclick="cambiarTema('verde',this)"  title="Verde">🟢</button>
+          <button class="btn-tema"        data-tema="rojo"   onclick="cambiarTema('rojo',this)"   title="Rojo">🔴</button>
+          <button class="btn-tema"        data-tema="oro"    onclick="cambiarTema('oro',this)"    title="Oro">🟡</button>
+          <button class="btn-tema"        data-tema="rosa"   onclick="cambiarTema('rosa',this)"   title="Rosa">🩷</button>
+        </div>
         <button class="btn-tam" onclick="ajustarTamano(-2)">A-</button>
         <button class="btn-tam" onclick="ajustarTamano(+2)">A+</button>
-        &nbsp;
-        <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊 VOZ</button>
+        <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊</button>
       </div>
     </div>
 
     <!-- ── PANEL CONEXIÓN TIKTOK ── -->
     <div class="panel-tiktok">
-      <span class="panel-label">🎵 TIKTOK LIVE:</span>
-      <input id="input-usuario" type="text" placeholder="@tu_usuario" 
+      <span class="panel-label">🎵 TIKTOK:</span>
+      <input id="input-usuario" type="text" placeholder="@usuario"
              onkeydown="if(event.key==='Enter') conectarTikTok()" />
       <button onclick="conectarTikTok()">🔗 CONECTAR</button>
-      <button onclick="desconectar()" id="btn-desconectar" style="display:none">⛔ DESCONECTAR</button>
+      <button onclick="desconectar()" id="btn-desconectar" style="display:none">⛔ SALIR</button>
+      <!-- Meta diamantes editable -->
+      <span class="panel-label" style="margin-left:8px">🎯 META:</span>
+      <input id="input-meta" type="number" placeholder="1000" min="1"
+             style="width:80px" onchange="actualizarMeta()" />
       <div class="reconectando" id="reconectando" style="display:none">
         <span class="spinner"></span> Reconectando...
       </div>
@@ -51,7 +64,7 @@
 
     <!-- ── BARRA DE DIAMANTES ── -->
     <div class="barra-diamantes-wrap">
-      <span>💎 META DIAMANTES:</span>
+      <span>💎</span>
       <div class="barra-diamantes-bg">
         <div class="barra-diamantes-fill" id="barra-fill"></div>
         <span class="barra-diamantes-txt" id="barra-txt">0 / 1000</span>
@@ -60,110 +73,95 @@
 
     <!-- ── TABS MÓVIL ── -->
     <div class="tabs-movil">
-      <button class="tab-btn activo" onclick="cambiarTab('izq', this)">👥 Actividad</button>
-      <button class="tab-btn"        onclick="cambiarTab('chat', this)">💬 Chat</button>
-      <button class="tab-btn"        onclick="cambiarTab('juegos', this)">🎮 Juegos</button>
+      <button class="tab-btn activo" onclick="cambiarTab('izq',this)">👥</button>
+      <button class="tab-btn"        onclick="cambiarTab('chat',this)">💬 <span class="badge-chat" id="badge-chat" style="display:none">●</span></button>
+      <button class="tab-btn"        onclick="cambiarTab('juegos',this)">🎮</button>
+      <button class="tab-btn"        onclick="cambiarTab('puntos',this)">🏆</button>
     </div>
 
     <!-- ── ZONA CENTRAL ── -->
     <div class="zona-central">
 
-      <!-- Columna izquierda: llegadas, follows, gifts -->
+      <!-- Actividad -->
       <div class="columna tab-visible" id="col-izq">
         <h2>👥 ACTIVIDAD</h2>
       </div>
 
-      <!-- Columna central: chat -->
+      <!-- Chat -->
       <div class="columna" id="col-chat">
         <h2>💬 CHAT LIVE
-          <span class="comandos-hint">!dado · !magia · !pelea · !ruleta · !8ball · !sorteo</span>
+          <span class="comandos-hint">!dado · !magia · !pelea · !ruleta · !8ball · !trivia · !ppt · !sorteo</span>
         </h2>
+        <!-- Filtro spam -->
+        <div class="filtro-wrap">
+          <input id="input-filtro" type="text" placeholder="🚫 Filtrar palabra..." />
+          <button onclick="agregarFiltro()">+</button>
+        </div>
+        <div id="filtros-lista" class="filtros-lista"></div>
       </div>
 
-      <!-- Columna derecha: juegos / pantalla -->
+      <!-- Juegos -->
       <div class="columna col-juegos" id="col-juegos">
         <h2>🎮 JUEGOS</h2>
         <div class="pantalla-3d" id="pantalla-juegos">✨ LISTO ✨</div>
+        <!-- Contador regresivo -->
+        <div class="contador-wrap" id="contador-wrap" style="display:none">
+          <div class="contador" id="contador">10</div>
+          <button onclick="detenerContador()">⏹</button>
+        </div>
         <div class="juegos-botones">
           <button onclick="juegoDado('Streamer')">🎲 Dado</button>
           <button onclick="juegoMagia('Streamer')">🔮 Magia</button>
           <button onclick="juegoPelea('Streamer')">⚔️ Pelea</button>
           <button onclick="juegoRuleta('Streamer')">🔄 Ruleta</button>
           <button onclick="juego8ball('Streamer')">🎱 8-Ball</button>
+          <button onclick="juegoTrivia('Streamer')">🧠 Trivia</button>
+          <button onclick="juegoPPT('Streamer')">✂️ PPT</button>
           <button onclick="juegoSorteo()">🏆 Sorteo</button>
+          <button onclick="iniciarContador()" class="btn-contador">⏱️ Cuenta</button>
         </div>
+      </div>
+
+      <!-- Tabla de puntos -->
+      <div class="columna col-puntos" id="col-puntos">
+        <h2>🏆 PUNTOS</h2>
+        <div id="tabla-puntos"></div>
+        <button onclick="resetearPuntos()" style="margin-top:10px;width:100%">🗑️ Resetear</button>
       </div>
 
     </div>
 
-    <!-- ── BARRA DE VOZ ── -->
-    <div class="barra-voz">
-      🤖 <span id="texto-voz">Sistema activo y listo</span>
+    <!-- ── GRÁFICA VIEWERS ── -->
+    <div class="grafica-wrap">
+      <span class="grafica-label">📊 VIEWERS</span>
+      <canvas id="grafica-viewers" height="40"></canvas>
     </div>
+
+    <!-- ── BARRA DE VOZ ── -->
+    <div class="barra-voz">🤖 <span id="texto-voz">Sistema activo y listo</span></div>
 
   </div>
 
-  <!-- OVERLAY DE ALERTA GRANDE (follows, gifts épicos) -->
+  <!-- OVERLAY ALERTA ÉPICA -->
   <div class="overlay-alerta" id="overlay-alerta"></div>
 
-  <!-- BOTÓN ? AYUDA -->
-  <button class="btn-ayuda" onclick="toggleAyuda()" title="Ayuda de juegos">?</button>
+  <!-- BOTÓN ? -->
+  <button class="btn-ayuda" onclick="toggleAyuda()" title="Ayuda">?</button>
 
-  <!-- MODAL DE AYUDA -->
+  <!-- MODAL AYUDA -->
   <div class="ayuda-overlay" id="ayuda-overlay" onclick="cerrarAyuda(event)">
     <div class="ayuda-modal">
       <button class="ayuda-cerrar" onclick="toggleAyuda()">✕</button>
       <h2>🎮 GUÍA DE JUEGOS</h2>
       <div class="ayuda-lista">
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">🎲</div>
-          <div class="ayuda-texto">
-            <strong>!dado</strong>
-            <p>Tira un dado del 1 al 6. El número sale en pantalla con animación y la voz lo anuncia. Escríbelo en el chat del live.</p>
-          </div>
-        </div>
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">🔮</div>
-          <div class="ayuda-texto">
-            <strong>!magia</strong>
-            <p>El oráculo te revela tu destino. Puede salir: Futuro Brillante, Suerte Maestra, Cuidado o Rey. ¡Nunca sabes!</p>
-          </div>
-        </div>
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">⚔️</div>
-          <div class="ayuda-texto">
-            <strong>!pelea</strong>
-            <p>Tú vs El Sistema. Cada uno recibe un poder del 0 al 99. El que tenga más gana. ¿Puedes vencer al sistema?</p>
-          </div>
-        </div>
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">🔄</div>
-          <div class="ayuda-texto">
-            <strong>!ruleta</strong>
-            <p>La ruleta gira y te da un premio aleatorio: 🥇 Primero, 🥈 Segundo, 🤡 Payaso, 👑 Rey o 🎉 Fiesta.</p>
-          </div>
-        </div>
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">🎱</div>
-          <div class="ayuda-texto">
-            <strong>!8ball</strong>
-            <p>Hazle una pregunta a la bola mágica. Responde sí, no, o quizás de formas épicas y misteriosas.</p>
-          </div>
-        </div>
-
-        <div class="ayuda-item">
-          <div class="ayuda-icono">🏆</div>
-          <div class="ayuda-texto">
-            <strong>!sorteo</strong>
-            <p>Entra al sorteo escribiendo el comando. El streamer puede activar el sorteo desde el panel y saldrá un ganador al azar entre todos los participantes.</p>
-          </div>
-        </div>
-
+        <div class="ayuda-item"><div class="ayuda-icono">🎲</div><div class="ayuda-texto"><strong>!dado</strong><p>Tira un dado del 1 al 6. Gana puntos si saca 6.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🔮</div><div class="ayuda-texto"><strong>!magia</strong><p>El oráculo revela tu destino: Brillante, Suerte, Cuidado o Rey.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">⚔️</div><div class="ayuda-texto"><strong>!pelea</strong><p>Tú vs El Sistema. El mayor poder gana. Ganas puntos si vences.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🔄</div><div class="ayuda-texto"><strong>!ruleta</strong><p>Gira la ruleta: 🥇 Primero, 🥈 Segundo, 🤡 Payaso, 👑 Rey, 🎉 Fiesta.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🎱</div><div class="ayuda-texto"><strong>!8ball</strong><p>Pregúntale a la bola mágica. Responde sí, no o quizás.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🧠</div><div class="ayuda-texto"><strong>!trivia</strong><p>Responde la pregunta correcta y gana puntos.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">✂️</div><div class="ayuda-texto"><strong>!ppt</strong><p>Piedra, Papel o Tijera contra el sistema. Escribe !piedra, !papel o !tijera.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🏆</div><div class="ayuda-texto"><strong>!sorteo</strong><p>Entra al sorteo. El streamer elige al ganador desde el panel.</p></div></div>
       </div>
     </div>
   </div>
