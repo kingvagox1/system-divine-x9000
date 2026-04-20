@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SYSTEM DIVINE X-9000</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- PARTÍCULAS DE FONDO -->
+  <canvas id="particulas"></canvas>
+
+  <div class="sistema-madre">
+
+    <!-- ── CABECERA ── -->
+    <div class="cabecera">
+      <div class="cab-titulo">⚡ SYSTEM DIVINE X-9000 ⚡</div>
+      <div class="cab-info">
+        <span id="estado-dot">🔴</span>
+        <span id="estado-txt">OFFLINE</span>
+        &nbsp;|&nbsp;
+        👁️ <span id="viewers">0</span> viewers
+        &nbsp;|&nbsp;
+        ❤️ <span id="total-likes">0</span> likes
+        &nbsp;|&nbsp;
+        💎 <span id="total-diamantes">0</span> diamantes
+      </div>
+      <div class="cab-controles">
+        🔍
+        <button class="btn-tam" onclick="ajustarTamano(-2)">A-</button>
+        <button class="btn-tam" onclick="ajustarTamano(+2)">A+</button>
+        &nbsp;
+        <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊 VOZ</button>
+      </div>
+    </div>
+
+    <!-- ── PANEL CONEXIÓN TIKTOK ── -->
+    <div class="panel-tiktok">
+      <span class="panel-label">🎵 TIKTOK LIVE:</span>
+      <input id="input-usuario" type="text" placeholder="@tu_usuario" 
+             onkeydown="if(event.key==='Enter') conectarTikTok()" />
+      <button onclick="conectarTikTok()">🔗 CONECTAR</button>
+      <button onclick="desconectar()" id="btn-desconectar" style="display:none">⛔ DESCONECTAR</button>
+      <div class="reconectando" id="reconectando" style="display:none">
+        <span class="spinner"></span> Reconectando...
+      </div>
+    </div>
+
+    <!-- ── BARRA DE DIAMANTES ── -->
+    <div class="barra-diamantes-wrap">
+      <span>💎 META DIAMANTES:</span>
+      <div class="barra-diamantes-bg">
+        <div class="barra-diamantes-fill" id="barra-fill"></div>
+        <span class="barra-diamantes-txt" id="barra-txt">0 / 1000</span>
+      </div>
+    </div>
+
+    <!-- ── ZONA CENTRAL ── -->
+    <div class="zona-central">
+
+      <!-- Columna izquierda: llegadas, follows, gifts -->
+      <div class="columna" id="col-izq">
+        <h2>👥 ACTIVIDAD</h2>
+      </div>
+
+      <!-- Columna central: chat -->
+      <div class="columna col-chat-wrap" id="col-chat">
+        <h2>💬 CHAT LIVE
+          <span class="comandos-hint">!dado · !magia · !pelea · !ruleta · !8ball · !sorteo</span>
+        </h2>
+      </div>
+
+      <!-- Columna derecha: juegos / pantalla -->
+      <div class="columna col-juegos">
+        <h2>🎮 JUEGOS</h2>
+        <div class="pantalla-3d" id="pantalla-juegos">✨ LISTO ✨</div>
+        <div class="juegos-botones">
+          <button onclick="juegoDado('Streamer')">🎲 Dado</button>
+          <button onclick="juegoMagia('Streamer')">🔮 Magia</button>
+          <button onclick="juegoPelea('Streamer')">⚔️ Pelea</button>
+          <button onclick="juegoRuleta('Streamer')">🔄 Ruleta</button>
+          <button onclick="juego8ball('Streamer')">🎱 8-Ball</button>
+          <button onclick="juegoSorteo()">🏆 Sorteo</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── BARRA DE VOZ ── -->
+    <div class="barra-voz">
+      🤖 <span id="texto-voz">Sistema activo y listo</span>
+    </div>
+
+  </div>
+
+  <!-- OVERLAY DE ALERTA GRANDE (follows, gifts épicos) -->
+  <div class="overlay-alerta" id="overlay-alerta"></div>
+
+  <!-- BOTÓN ? AYUDA -->
+  <button class="btn-ayuda" onclick="toggleAyuda()" title="Ayuda de juegos">?</button>
+
+  <!-- MODAL DE AYUDA -->
+  <div class="ayuda-overlay" id="ayuda-overlay" onclick="cerrarAyuda(event)">
+    <div class="ayuda-modal">
+      <button class="ayuda-cerrar" onclick="toggleAyuda()">✕</button>
+      <h2>🎮 GUÍA DE JUEGOS</h2>
+      <div class="ayuda-lista">
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">🎲</div>
+          <div class="ayuda-texto">
+            <strong>!dado</strong>
+            <p>Tira un dado del 1 al 6. El número sale en pantalla con animación y la voz lo anuncia. Escríbelo en el chat del live.</p>
+          </div>
+        </div>
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">🔮</div>
+          <div class="ayuda-texto">
+            <strong>!magia</strong>
+            <p>El oráculo te revela tu destino. Puede salir: Futuro Brillante, Suerte Maestra, Cuidado o Rey. ¡Nunca sabes!</p>
+          </div>
+        </div>
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">⚔️</div>
+          <div class="ayuda-texto">
+            <strong>!pelea</strong>
+            <p>Tú vs El Sistema. Cada uno recibe un poder del 0 al 99. El que tenga más gana. ¿Puedes vencer al sistema?</p>
+          </div>
+        </div>
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">🔄</div>
+          <div class="ayuda-texto">
+            <strong>!ruleta</strong>
+            <p>La ruleta gira y te da un premio aleatorio: 🥇 Primero, 🥈 Segundo, 🤡 Payaso, 👑 Rey o 🎉 Fiesta.</p>
+          </div>
+        </div>
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">🎱</div>
+          <div class="ayuda-texto">
+            <strong>!8ball</strong>
+            <p>Hazle una pregunta a la bola mágica. Responde sí, no, o quizás de formas épicas y misteriosas.</p>
+          </div>
+        </div>
+
+        <div class="ayuda-item">
+          <div class="ayuda-icono">🏆</div>
+          <div class="ayuda-texto">
+            <strong>!sorteo</strong>
+            <p>Entra al sorteo escribiendo el comando. El streamer puede activar el sorteo desde el panel y saldrá un ganador al azar entre todos los participantes.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

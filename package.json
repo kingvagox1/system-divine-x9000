@@ -1,0 +1,14 @@
+{
+  "name": "system-divine-x9000",
+  "version": "1.0.0",
+  "description": "Sistema Divine X-9000 con conexión a TikTok Live",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^1.1.8",
+    "socket.io": "^4.7.5",
+    "express": "^4.19.2"
+  }
+}
