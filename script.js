@@ -132,20 +132,45 @@ socket.on('estado', data => {
 });
 
 socket.on('stats', data => {
-  document.getElementById('viewers').textContent = data.viewers.toLocaleString();
-  viewersData.push(data.viewers);
-  if (viewersData.length > 60) viewersData.shift();
-  actualizarGrafica();
+  if (data.viewers  !== undefined) document.getElementById('viewers').textContent        = Number(data.viewers).toLocaleString();
+  if (data.likes    !== undefined) document.getElementById('total-likes').textContent    = Number(data.likes).toLocaleString();
+  if (data.diamantes!== undefined) {
+    totalDiamantes = data.diamantes;
+    document.getElementById('total-diamantes').textContent = Number(data.diamantes).toLocaleString();
+    actualizarBarraDiamantes();
+  }
+  if (data.viewers !== undefined) {
+    viewersData.push(data.viewers);
+    if (viewersData.length > 60) viewersData.shift();
+    actualizarGrafica();
+  }
 });
 
 socket.on('evento', data => {
   switch (data.tipo) {
-    case 'chat':   manejarChat(data);   break;
-    case 'join':   manejarJoin(data);   break;
-    case 'follow': manejarFollow(data); break;
-    case 'gift':   manejarGift(data);   break;
-    case 'like':   manejarLike(data);   break;
+    case 'chat':      manejarChat(data);      break;
+    case 'join':      manejarJoin(data);      break;
+    case 'follow':    manejarFollow(data);    break;
+    case 'gift':      manejarGift(data);      break;
+    case 'like':      manejarLike(data);      break;
+    case 'share':     manejarShare(data);     break;
+    case 'subscribe': manejarSubscribe(data); break;
   }
+});
+
+socket.on('reconectando', data => {
+  document.getElementById('estado-dot').textContent = '🟡';
+  document.getElementById('estado-txt').textContent = `RECONECTANDO ${data.intento}/${data.max}`;
+  document.getElementById('reconectando').style.display = 'flex';
+});
+
+socket.on('streamEnd', data => {
+  mostrarAlerta(`📴 LIVE TERMINADO\n@${data.usuario}`);
+  hablar(`El live de ${data.usuario} ha terminado.`);
+});
+
+socket.on('error_tiktok', data => {
+  console.warn('Error TikTok:', data.mensaje);
 });
 
 // ─── SONIDOS ──────────────────────────────────────────────────────────────────
@@ -203,7 +228,10 @@ function manejarChat(data) {
   div.className = 'msg';
   const claseRol = data.rol === 'mod' ? 'admin' : (data.rol === 'vip' ? 'vip' : 'normal');
   const icono    = data.rol === 'mod' ? '🛡️' : (data.rol === 'vip' ? '⭐' : '');
-  div.innerHTML  = `<span class="user ${claseRol}">${icono} @${data.usuario}:</span> ${data.texto}`;
+  const avatarHtml = data.avatar
+    ? `<img src="${data.avatar}" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:4px;border:1px solid rgba(255,255,255,0.2)">`
+    : '';
+  div.innerHTML  = `${avatarHtml}<span class="user ${claseRol}">${icono} @${data.usuario}:</span> ${data.texto}`;
   chat.insertBefore(div, chat.children[2] || null); // después del filtro
   while (chat.children.length > 55) chat.removeChild(chat.lastChild);
 
@@ -241,7 +269,11 @@ function manejarJoin(data) {
   const col   = document.getElementById('col-izq');
   const aviso = document.createElement('div');
   aviso.className = 'bienvenida';
-  aviso.innerHTML = `🎉 ${data.nombre.toUpperCase()} 🎉`;
+  // Mostrar avatar si viene
+  const avatarHtml = data.avatar
+    ? `<img src="${data.avatar}" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,0.4)">`
+    : '';
+  aviso.innerHTML = `${avatarHtml}🎉 ${data.nombre.toUpperCase()} 🎉`;
   col.insertBefore(aviso, col.firstChild);
   while (col.children.length > 32) col.removeChild(col.lastChild);
   hablar(`¡Bienvenido ${data.nombre}! Que disfrutes el live.`);
@@ -251,8 +283,12 @@ function manejarFollow(data) {
   const col = document.getElementById('col-izq');
   const div = document.createElement('div');
   div.className = 'follow';
-  div.innerHTML = `❤️ @${data.nombre} TE SIGUIÓ ❤️`;
+  const avatarHtml = data.avatar
+    ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
+    : '';
+  div.innerHTML = `${avatarHtml}❤️ @${data.nombre} TE SIGUIÓ ❤️`;
   col.insertBefore(div, col.firstChild);
+  while (col.children.length > 32) col.removeChild(col.lastChild);
 
   mostrarPantalla(`❤️ FOLLOW\n@${data.nombre}`);
   mostrarAlerta(`❤️ @${data.nombre}\nTE SIGUIÓ`);
@@ -260,17 +296,57 @@ function manejarFollow(data) {
   hablar(`¡Gracias por el follow ${data.nombre}! Eres increíble.`);
 }
 
+function manejarShare(data) {
+  const col = document.getElementById('col-izq');
+  const div = document.createElement('div');
+  div.className = 'follow';
+  div.style.background = 'linear-gradient(135deg, rgba(0,170,255,0.18), rgba(0,240,255,0.15))';
+  div.style.borderColor = 'rgba(0,240,255,0.45)';
+  div.style.boxShadow   = '0 0 20px rgba(0,240,255,0.3)';
+  div.innerHTML = `🔗 @${data.nombre} COMPARTIÓ EL LIVE 🔗`;
+  col.insertBefore(div, col.firstChild);
+  while (col.children.length > 32) col.removeChild(col.lastChild);
+  hablar(`¡${data.nombre} compartió el live! ¡Gracias!`);
+}
+
+function manejarSubscribe(data) {
+  const col = document.getElementById('col-izq');
+  const div = document.createElement('div');
+  div.className = 'follow';
+  div.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,136,0,0.15))';
+  div.style.borderColor = 'rgba(255,215,0,0.5)';
+  div.style.boxShadow   = '0 0 22px rgba(255,215,0,0.35)';
+  div.innerHTML = `⭐ @${data.nombre} SE SUSCRIBIÓ ⭐`;
+  col.insertBefore(div, col.firstChild);
+  while (col.children.length > 32) col.removeChild(col.lastChild);
+
+  mostrarPantalla(`⭐ SUSCRIPTOR\n@${data.nombre}`);
+  mostrarAlerta(`⭐ @${data.nombre}\n¡SUSCRIPTOR!`);
+  sonar('gift');
+  hablar(`¡${data.nombre} se suscribió! ¡Muchísimas gracias!`);
+}
+
 function manejarGift(data) {
-  totalDiamantes += data.diamantes;
-  document.getElementById('total-diamantes').textContent = totalDiamantes.toLocaleString();
-  actualizarBarraDiamantes();
+  // El servidor ya acumula los diamantes, usamos su total
+  if (data.totalDiamantes !== undefined) {
+    totalDiamantes = data.totalDiamantes;
+    document.getElementById('total-diamantes').textContent = totalDiamantes.toLocaleString();
+    actualizarBarraDiamantes();
+  }
 
   const col = document.getElementById('col-izq');
   const div = document.createElement('div');
-  const rareza = data.diamantes >= 1000 ? 'legendario' : data.diamantes >= 100 ? 'epico' : data.diamantes >= 10 ? 'raro' : 'comun';
+  const rareza = data.diamantes >= 1000 ? 'legendario'
+               : data.diamantes >= 100  ? 'epico'
+               : data.diamantes >= 10   ? 'raro'
+               : 'comun';
   div.className = `regalo ${rareza}`;
-  div.innerHTML = `🎁 @${data.nombre}<br>${data.cantidad}x ${data.regalo} · 💎${data.diamantes}`;
+  const avatarHtml = data.avatar
+    ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
+    : '';
+  div.innerHTML = `${avatarHtml}🎁 @${data.nombre}<br>${data.cantidad}x ${data.regalo} · 💎${data.diamantes}`;
   col.insertBefore(div, col.firstChild);
+  while (col.children.length > 32) col.removeChild(col.lastChild);
 
   mostrarPantalla(`🎁 ${data.regalo}\nx${data.cantidad}`);
   if (rareza === 'legendario' || rareza === 'epico') {
@@ -281,8 +357,11 @@ function manejarGift(data) {
 }
 
 function manejarLike(data) {
-  totalLikes += data.likes || 1;
-  document.getElementById('total-likes').textContent = totalLikes.toLocaleString();
+  // Usar el total real que viene del servidor
+  if (data.total !== undefined) {
+    totalLikes = data.total;
+    document.getElementById('total-likes').textContent = totalLikes.toLocaleString();
+  }
 }
 
 // ─── PANTALLA Y ALERTA ────────────────────────────────────────────────────────
@@ -587,3 +666,76 @@ function cerrarAyuda(e) {
 
 // ─── INICIO ───────────────────────────────────────────────────────────────────
 hablar('Sistema Divine X-9000 cargado. Pon tu usuario de TikTok y conecta.');
+
+
+// ─── RESIZE HANDLES ────────────────────────────────────────────────────────────
+(function initResizeHandles() {
+  function addHandle(col) {
+    if (col.querySelector('.columna-resize-handle')) return;
+    const handle = document.createElement('div');
+    handle.className = 'columna-resize-handle';
+    handle.title = 'Arrastrar para redimensionar';
+    col.appendChild(handle);
+
+    let startX, startW;
+
+    handle.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      startX = e.clientX;
+      startW = col.getBoundingClientRect().width;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      function onMove(ev) {
+        const delta = ev.clientX - startX;
+        const newW  = Math.max(140, startW + delta);
+        col.style.flex = 'none';
+        col.style.width = newW + 'px';
+      }
+
+      function onUp() {
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+
+    // Touch support
+    handle.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startW = col.getBoundingClientRect().width;
+
+      function onTouchMove(ev) {
+        const t = ev.touches[0];
+        const delta = t.clientX - startX;
+        const newW  = Math.max(140, startW + delta);
+        col.style.flex = 'none';
+        col.style.width = newW + 'px';
+      }
+
+      function onTouchEnd() {
+        handle.removeEventListener('touchmove', onTouchMove);
+        handle.removeEventListener('touchend', onTouchEnd);
+      }
+
+      handle.addEventListener('touchmove', onTouchMove, { passive: false });
+      handle.addEventListener('touchend', onTouchEnd);
+    }, { passive: false });
+  }
+
+  function attachAll() {
+    document.querySelectorAll('.zona-central .columna').forEach(addHandle);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachAll);
+  } else {
+    attachAll();
+  }
+})();
