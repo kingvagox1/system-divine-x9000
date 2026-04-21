@@ -310,11 +310,10 @@ function manejarChat(data) {
   }
 
   sonar('mensaje');
-  // Lee el mensaje en voz, pero si la cola está llena lo salta para no acumularse
-  if (colaVoz.length < 2) {
+  // Lee el mensaje en voz, cola máximo 10
+  if (colaVoz.length < 10) {
     hablar(`${data.nombre}: ${data.texto}`);
   } else {
-    // Solo actualiza el texto en la barra sin hablar
     const el = document.getElementById('texto-voz');
     if (el) el.innerText = `${data.nombre}: ${data.texto}`;
   }
