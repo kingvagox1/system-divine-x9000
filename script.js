@@ -287,7 +287,8 @@ function manejarChat(data) {
   }
 
   sonar('mensaje');
-  hablar(`${data.nombre}: ${data.texto}`);
+  // Solo leer en voz si hay pocos mensajes (no saturar en lives con mucho chat)
+  // Los mensajes normales solo hacen sonido, no se leen
 }
 
 function manejarJoin(data) {
