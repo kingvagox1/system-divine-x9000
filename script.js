@@ -310,8 +310,14 @@ function manejarChat(data) {
   }
 
   sonar('mensaje');
-  // Solo leer en voz si hay pocos mensajes (no saturar en lives con mucho chat)
-  // Los mensajes normales solo hacen sonido, no se leen
+  // Lee el mensaje en voz, pero si la cola está llena lo salta para no acumularse
+  if (colaVoz.length < 2) {
+    hablar(`${data.nombre}: ${data.texto}`);
+  } else {
+    // Solo actualiza el texto en la barra sin hablar
+    const el = document.getElementById('texto-voz');
+    if (el) el.innerText = `${data.nombre}: ${data.texto}`;
+  }
 }
 
 function manejarJoin(data) {
