@@ -65,7 +65,12 @@ function conectarTikTok(username) {
 
   tiktokConnection = new TikTokLiveConnection(username, {
     enableExtendedGiftInfo: true,
-    requestPollingIntervalMs: 2000
+    requestPollingIntervalMs: 2000,
+    // Credenciales opcionales para evitar bloqueo de IP en servidores cloud
+    ...(process.env.TIKTOK_SESSION_ID && {
+      sessionId:   process.env.TIKTOK_SESSION_ID,
+      ttTargetIdc: process.env.TIKTOK_TARGET_IDC || 'useast1a'
+    })
   });
 
   tiktokConnection.connect()
