@@ -505,19 +505,29 @@ function ajustarTamano(cant) {
 }
 
 // ─── VOZ CON COLA ─────────────────────────────────────────────────────────────
-let colaVoz       = [];
-let hablandoAhora = false;
+let colaVoz        = [];
+let hablandoAhora  = false;
 let vozDesbloqueada = false;
+let vocesListas    = false;
+
+// Cargar voces disponibles (asíncrono en Chrome)
+function cargarVoces() {
+  const voces = window.speechSynthesis.getVoices();
+  if (voces.length > 0) vocesListas = true;
+}
+cargarVoces();
+window.speechSynthesis.onvoiceschanged = cargarVoces;
 
 // Desbloquear voz con el primer click del usuario
-document.addEventListener('click', function desbloquear() {
+document.addEventListener('click', function() {
   if (vozDesbloqueada) return;
   vozDesbloqueada = true;
-  // Hablar silenciosamente para desbloquear el contexto
+  // Hablar silenciosamente para desbloquear el contexto del navegador
   const u = new SpeechSynthesisUtterance(' ');
   u.volume = 0;
   window.speechSynthesis.speak(u);
-  document.removeEventListener('click', desbloquear);
+  // Procesar cola si había mensajes esperando
+  setTimeout(procesarColaVoz, 200);
 }, { once: true });
 
 function hablar(texto) {
@@ -537,9 +547,14 @@ function procesarColaVoz() {
   hablandoAhora = true;
   const texto = colaVoz.shift();
   const voz   = new SpeechSynthesisUtterance(texto);
-  voz.lang    = 'es-MX';
-  voz.volume  = 1;
-  voz.rate    = 1.0;
+
+  // Buscar voz en español disponible
+  const voces = window.speechSynthesis.getVoices();
+  const vozEs = voces.find(v => v.lang.startsWith('es')) || null;
+  if (vozEs) voz.voice = vozEs;
+  voz.lang   = vozEs ? vozEs.lang : 'es';
+  voz.volume = 1;
+  voz.rate   = 1.0;
   voz.onend   = () => { hablandoAhora = false; procesarColaVoz(); };
   voz.onerror = () => { hablandoAhora = false; procesarColaVoz(); };
   window.speechSynthesis.speak(voz);
