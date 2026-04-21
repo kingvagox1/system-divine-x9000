@@ -174,29 +174,41 @@ socket.on('error_tiktok', data => {
 });
 
 // ─── SONIDOS ──────────────────────────────────────────────────────────────────
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
 function sonar(tipo) {
   if (mutado) return;
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = ctx.createOscillator();
-  const gain= ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+  try {
+    const ctx  = getAudioCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
 
-  const configs = {
-    conectar: { freq: 880, tipo: 'sine',    dur: 0.3, vol: 0.3 },
-    follow:   { freq: 660, tipo: 'sine',    dur: 0.4, vol: 0.4 },
-    gift:     { freq: 440, tipo: 'triangle',dur: 0.6, vol: 0.5 },
-    mensaje:  { freq: 330, tipo: 'sine',    dur: 0.1, vol: 0.15 },
-    juego:    { freq: 550, tipo: 'square',  dur: 0.2, vol: 0.2 },
-  };
+    const configs = {
+      conectar: { freq: 880, tipo: 'sine',     dur: 0.3, vol: 0.3 },
+      follow:   { freq: 660, tipo: 'sine',     dur: 0.4, vol: 0.4 },
+      gift:     { freq: 440, tipo: 'triangle', dur: 0.6, vol: 0.5 },
+      mensaje:  { freq: 330, tipo: 'sine',     dur: 0.1, vol: 0.15 },
+      juego:    { freq: 550, tipo: 'square',   dur: 0.2, vol: 0.2 },
+    };
 
-  const c = configs[tipo] || configs.mensaje;
-  osc.type      = c.tipo;
-  osc.frequency.setValueAtTime(c.freq, ctx.currentTime);
-  gain.gain.setValueAtTime(c.vol, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + c.dur);
-  osc.start();
-  osc.stop(ctx.currentTime + c.dur);
+    const c = configs[tipo] || configs.mensaje;
+    osc.type = c.tipo;
+    osc.frequency.setValueAtTime(c.freq, ctx.currentTime);
+    gain.gain.setValueAtTime(c.vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + c.dur);
+    osc.start();
+    osc.stop(ctx.currentTime + c.dur);
+  } catch(e) { /* silencioso si falla */ }
 }
 
 // ─── CONECTAR / DESCONECTAR ───────────────────────────────────────────────────
@@ -493,15 +505,29 @@ function ajustarTamano(cant) {
 }
 
 // ─── VOZ CON COLA ─────────────────────────────────────────────────────────────
-let colaVoz = [];
+let colaVoz       = [];
 let hablandoAhora = false;
+let vozDesbloqueada = false;
+
+// Desbloquear voz con el primer click del usuario
+document.addEventListener('click', function desbloquear() {
+  if (vozDesbloqueada) return;
+  vozDesbloqueada = true;
+  // Hablar silenciosamente para desbloquear el contexto
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
+  window.speechSynthesis.speak(u);
+  document.removeEventListener('click', desbloquear);
+}, { once: true });
 
 function hablar(texto) {
   if (mutado) return;
   const corto = texto.length > 100 ? texto.substring(0, 100) + '...' : texto;
-  document.getElementById('texto-voz').innerText = corto;
+  // Actualizar barra de voz siempre
+  const el = document.getElementById('texto-voz');
+  if (el) el.innerText = corto;
 
-  // Agregar a la cola (máximo 3 mensajes pendientes para no acumular)
+  if (!vozDesbloqueada) return; // esperar primer click
   if (colaVoz.length < 3) colaVoz.push(corto);
   procesarColaVoz();
 }
@@ -517,6 +543,11 @@ function procesarColaVoz() {
   voz.onend   = () => { hablandoAhora = false; procesarColaVoz(); };
   voz.onerror = () => { hablandoAhora = false; procesarColaVoz(); };
   window.speechSynthesis.speak(voz);
+
+  // Seguro: si onend no se dispara en 8s, liberar la cola
+  setTimeout(() => {
+    if (hablandoAhora) { hablandoAhora = false; procesarColaVoz(); }
+  }, 8000);
 }
 
 function toggleMute() {
