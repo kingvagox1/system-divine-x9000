@@ -28,43 +28,48 @@ let graficaCtx    = null;
   }
 
   function crearEstrellas() {
+    // Menos estrellas en móvil para mejor rendimiento
+    const cantidad = window.innerWidth < 750 ? 60 : 140;
     estrellas = [];
-    for (let i = 0; i < 160; i++) {
+    for (let i = 0; i < cantidad; i++) {
       estrellas.push({
-        x:    Math.random() * canvas.width,
-        y:    Math.random() * canvas.height,
-        r:    Math.random() * 1.5 + 0.3,
-        op:   Math.random(),
-        vel:  Math.random() * 0.008 + 0.002,
-        dx:   (Math.random() - 0.5) * 0.15,
-        dy:   (Math.random() - 0.5) * 0.15,
+        x:   Math.random() * canvas.width,
+        y:   Math.random() * canvas.height,
+        r:   Math.random() * 1.4 + 0.2,
+        op:  Math.random(),
+        vel: Math.random() * 0.006 + 0.002,
+        dx:  (Math.random() - 0.5) * 0.12,
+        dy:  (Math.random() - 0.5) * 0.12,
       });
     }
   }
 
+  let frameId;
   function dibujar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     estrellas.forEach(s => {
       s.op += s.vel;
       if (s.op > 1 || s.op < 0) s.vel *= -1;
-      s.x += s.dx;
-      s.y += s.dy;
+      s.x += s.dx; s.y += s.dy;
       if (s.x < 0) s.x = canvas.width;
       if (s.x > canvas.width) s.x = 0;
       if (s.y < 0) s.y = canvas.height;
       if (s.y > canvas.height) s.y = 0;
-
       ctx.beginPath();
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${s.op * 0.8})`;
+      ctx.fillStyle = `rgba(255,255,255,${s.op * 0.75})`;
       ctx.fill();
     });
-    requestAnimationFrame(dibujar);
+    frameId = requestAnimationFrame(dibujar);
   }
 
-  resize();
-  crearEstrellas();
-  dibujar();
+  // Pausar cuando la pestaña no está visible (ahorro de CPU)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { cancelAnimationFrame(frameId); }
+    else { dibujar(); }
+  });
+
+  resize(); crearEstrellas(); dibujar();
   window.addEventListener('resize', () => { resize(); crearEstrellas(); });
 })();
 
@@ -75,34 +80,49 @@ let graficaCtx    = null;
   graficaCtx = canvas.getContext('2d');
 })();
 
+let graficaTimer = null;
 function actualizarGrafica() {
+  // Debounce: no redibujar más de 1 vez por segundo
+  if (graficaTimer) return;
+  graficaTimer = setTimeout(() => {
+    graficaTimer = null;
+    _dibujarGrafica();
+  }, 1000);
+}
+
+function _dibujarGrafica() {
   const canvas = document.getElementById('grafica-viewers');
-  if (!graficaCtx || !canvas) return;
+  if (!graficaCtx || !canvas || canvas.offsetWidth === 0) return;
   const w = canvas.offsetWidth;
   canvas.width = w;
   const h = canvas.height;
   graficaCtx.clearRect(0, 0, w, h);
   if (viewersData.length < 2) return;
 
-  const max = Math.max(...viewersData, 1);
+  const max  = Math.max(...viewersData, 1);
   const paso = w / (viewersData.length - 1);
 
+  // Área rellena
   graficaCtx.beginPath();
-  graficaCtx.strokeStyle = 'rgba(0,240,255,0.7)';
-  graficaCtx.lineWidth   = 2;
+  viewersData.forEach((v, i) => {
+    const x = i * paso;
+    const y = h - (v / max) * (h - 4) - 2;
+    i === 0 ? graficaCtx.moveTo(x, y) : graficaCtx.lineTo(x, y);
+  });
+  graficaCtx.lineTo(w, h); graficaCtx.lineTo(0, h); graficaCtx.closePath();
+  graficaCtx.fillStyle = 'rgba(0,240,255,0.07)';
+  graficaCtx.fill();
+
+  // Línea
+  graficaCtx.beginPath();
+  graficaCtx.strokeStyle = 'rgba(0,240,255,0.65)';
+  graficaCtx.lineWidth   = 1.5;
   viewersData.forEach((v, i) => {
     const x = i * paso;
     const y = h - (v / max) * (h - 4) - 2;
     i === 0 ? graficaCtx.moveTo(x, y) : graficaCtx.lineTo(x, y);
   });
   graficaCtx.stroke();
-
-  // Relleno
-  graficaCtx.lineTo(w, h);
-  graficaCtx.lineTo(0, h);
-  graficaCtx.closePath();
-  graficaCtx.fillStyle = 'rgba(0,240,255,0.08)';
-  graficaCtx.fill();
 }
 
 // ─── SOCKET.IO ────────────────────────────────────────────────────────────────
@@ -248,7 +268,39 @@ function sonar(tipo) {
   } catch(e) { /* silencioso si falla */ }
 }
 
-// ─── CONECTAR / DESCONECTAR ───────────────────────────────────────────────────
+// ─── HELPER: crear tarjeta de actividad ───────────────────────────────────────
+function crearTarjeta(tipo, icono, nombre, sub, extra, rareza) {
+  const div = document.createElement('div');
+  div.className = `tarjeta tarjeta-${tipo}${rareza ? ' ' + rareza : ''}`;
+
+  const avatarHtml = extra?.avatar
+    ? `<img src="${extra.avatar}" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;border:1.5px solid rgba(255,255,255,0.3);object-fit:cover">`
+    : `<div class="tarjeta-icono">${icono}</div>`;
+
+  const badgeHtml = extra?.diamantes
+    ? `<span class="diamantes-badge">💎 ${extra.diamantes}</span>`
+    : '';
+
+  div.innerHTML = `
+    <div class="tarjeta-inner">
+      ${avatarHtml}
+      <div class="tarjeta-contenido">
+        <div class="tarjeta-nombre">${nombre}</div>
+        ${sub ? `<div class="tarjeta-sub">${sub}</div>` : ''}
+      </div>
+      ${badgeHtml}
+    </div>`;
+  return div;
+}
+
+function insertarEnActividad(div) {
+  const col = document.getElementById('col-izq');
+  const h2  = col.querySelector('h2');
+  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
+  else col.appendChild(div);
+  const tarjetas = col.querySelectorAll('.tarjeta');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
+}
 function conectarTikTok() {
   const input = document.getElementById('input-usuario');
   const user  = input.value.trim().replace('@', '');
@@ -325,80 +377,33 @@ function manejarChat(data) {
 }
 
 function manejarJoin(data) {
-  const col  = document.getElementById('col-izq');
-  const h2   = col.querySelector('h2');
-  const aviso = document.createElement('div');
-  aviso.className = 'bienvenida';
-  const avatarHtml = data.avatar
-    ? `<img src="${data.avatar}" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,0.4)">`
-    : '';
-  aviso.innerHTML = `${avatarHtml}🎉 ${data.nombre.toUpperCase()} 🎉`;
-  // Insertar DESPUÉS del h2, no antes
-  if (h2 && h2.nextSibling) {
-    col.insertBefore(aviso, h2.nextSibling);
-  } else {
-    col.appendChild(aviso);
-  }
-  // Limitar a 30 tarjetas (sin contar el h2)
-  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
-  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
-  hablar(`¡Bienvenido ${data.nombre}! Que disfrutes el live.`);
+  const div = crearTarjeta('join', '🎉', data.nombre.toUpperCase(), 'entró al live', { avatar: data.avatar });
+  insertarEnActividad(div);
+  hablar(`¡Bienvenido ${data.nombre}!`);
 }
 
 function manejarFollow(data) {
-  const col = document.getElementById('col-izq');
-  const h2  = col.querySelector('h2');
-  const div = document.createElement('div');
-  div.className = 'follow';
-  const avatarHtml = data.avatar
-    ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
-    : '';
-  div.innerHTML = `${avatarHtml}❤️ @${data.nombre} TE SIGUIÓ ❤️`;
-  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
-  else col.appendChild(div);
-  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
-  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
-
+  const div = crearTarjeta('follow', '❤️', `@${data.nombre}`, 'te siguió', { avatar: data.avatar });
+  insertarEnActividad(div);
   mostrarPantalla(`❤️ FOLLOW\n@${data.nombre}`);
   mostrarAlerta(`❤️ @${data.nombre}\nTE SIGUIÓ`);
   sonar('follow');
-  hablar(`¡Gracias por el follow ${data.nombre}! Eres increíble.`);
+  hablar(`¡Gracias por el follow ${data.nombre}!`);
 }
 
 function manejarShare(data) {
-  const col = document.getElementById('col-izq');
-  const h2  = col.querySelector('h2');
-  const div = document.createElement('div');
-  div.className = 'follow';
-  div.style.background  = 'linear-gradient(135deg, rgba(0,170,255,0.18), rgba(0,240,255,0.15))';
-  div.style.borderColor = 'rgba(0,240,255,0.45)';
-  div.style.boxShadow   = '0 0 20px rgba(0,240,255,0.3)';
-  div.innerHTML = `🔗 @${data.nombre} COMPARTIÓ EL LIVE 🔗`;
-  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
-  else col.appendChild(div);
-  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
-  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
-  hablar(`¡${data.nombre} compartió el live! ¡Gracias!`);
+  const div = crearTarjeta('share', '🔗', `@${data.nombre}`, 'compartió el live', { avatar: data.avatar });
+  insertarEnActividad(div);
+  hablar(`¡${data.nombre} compartió el live!`);
 }
 
 function manejarSubscribe(data) {
-  const col = document.getElementById('col-izq');
-  const h2  = col.querySelector('h2');
-  const div = document.createElement('div');
-  div.className = 'follow';
-  div.style.background  = 'linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,136,0,0.15))';
-  div.style.borderColor = 'rgba(255,215,0,0.5)';
-  div.style.boxShadow   = '0 0 22px rgba(255,215,0,0.35)';
-  div.innerHTML = `⭐ @${data.nombre} SE SUSCRIBIÓ ⭐`;
-  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
-  else col.appendChild(div);
-  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
-  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
-
+  const div = crearTarjeta('subscribe', '⭐', `@${data.nombre}`, 'se suscribió', { avatar: data.avatar });
+  insertarEnActividad(div);
   mostrarPantalla(`⭐ SUSCRIPTOR\n@${data.nombre}`);
   mostrarAlerta(`⭐ @${data.nombre}\n¡SUSCRIPTOR!`);
   sonar('gift');
-  hablar(`¡${data.nombre} se suscribió! ¡Muchísimas gracias!`);
+  hablar(`¡${data.nombre} se suscribió! ¡Gracias!`);
 }
 
 function manejarGift(data) {
@@ -407,46 +412,47 @@ function manejarGift(data) {
     document.getElementById('total-diamantes').textContent = totalDiamantes.toLocaleString();
     actualizarBarraDiamantes();
   }
-
-  const col = document.getElementById('col-izq');
-  const h2  = col.querySelector('h2');
-  const div = document.createElement('div');
   const rareza = data.diamantes >= 1000 ? 'legendario'
                : data.diamantes >= 100  ? 'epico'
                : data.diamantes >= 10   ? 'raro'
-               : 'comun';
-  div.className = `regalo ${rareza}`;
-  const avatarHtml = data.avatar
-    ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
-    : '';
-  div.innerHTML = `${avatarHtml}🎁 @${data.nombre}<br>${data.cantidad}x ${data.regalo} · 💎${data.diamantes}`;
-  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
-  else col.appendChild(div);
-  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
-  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
+               : '';
+  const div = crearTarjeta('regalo', '🎁', `@${data.nombre}`,
+    `${data.cantidad}x ${data.regalo}`,
+    { avatar: data.avatar, diamantes: data.diamantes },
+    rareza
+  );
+  insertarEnActividad(div);
 
   mostrarPantalla(`🎁 ${data.regalo}\nx${data.cantidad}`);
   if (rareza === 'legendario' || rareza === 'epico') {
     mostrarAlerta(`🎁 @${data.nombre}\n${data.cantidad}x ${data.regalo}`);
   }
   sonar('gift');
-  hablar(`¡Gracias ${data.nombre} por ${data.cantidad} ${data.regalo}! ¡Eres un crack!`);
+  hablar(`¡Gracias ${data.nombre} por ${data.regalo}!`);
 }
 
 function manejarLike(data) {
-  // Usar el total real que viene del servidor
   if (data.total !== undefined) {
     totalLikes = data.total;
-    document.getElementById('total-likes').textContent = totalLikes.toLocaleString();
+    // Throttle: actualizar UI de likes máximo 1 vez por segundo
+    if (!manejarLike._timer) {
+      manejarLike._timer = setTimeout(() => {
+        document.getElementById('total-likes').textContent = totalLikes.toLocaleString();
+        manejarLike._timer = null;
+      }, 1000);
+    }
   }
 }
 
 // ─── PANTALLA Y ALERTA ────────────────────────────────────────────────────────
-function mostrarPantalla(texto) {
+function mostrarPantalla(texto, sub) {
   const pant = document.getElementById('pantalla-juegos');
-  pant.innerHTML       = texto.replace(/\n/g, '<br>');
+  pant.innerHTML = texto.replace(/\n/g, '<br>') +
+    (sub ? `<div class="pantalla-sub">${sub}</div>` : '');
   pant.style.animation = 'none';
-  setTimeout(() => pant.style.animation = 'aparecer 0.6s ease-out', 10);
+  pant.classList.add('activa');
+  setTimeout(() => { pant.style.animation = 'aparecer 0.6s ease-out'; }, 10);
+  setTimeout(() => pant.classList.remove('activa'), 4000);
 }
 
 function mostrarAlerta(texto) {
@@ -581,6 +587,8 @@ document.addEventListener('visibilitychange', () => {
     if (audioCtx && audioCtx.state === 'suspended') {
       audioCtx.resume().then(() => procesarColaVoz());
     }
+    // Reanudar cola de voz si había mensajes pendientes
+    procesarColaVoz();
   }
 });
 

@@ -654,7 +654,7 @@ button:active { transform: translateY(1px) scale(0.97); filter: brightness(0.95)
 .btn-mute.muted { background: linear-gradient(135deg, #660022, #990033); border-color: rgba(255,51,102,0.35); }
 
 /* ══════════════════════════════════════════════════════════════
-   TARJETAS DE EVENTOS
+   TARJETAS DE EVENTOS — REDISEÑO PREMIUM
    ══════════════════════════════════════════════════════════════ */
 .user   { font-family: 'Rajdhani', sans-serif; font-size: var(--tam); font-weight: 700; }
 .admin  { color: var(--oro);  text-shadow: 0 0 10px var(--oro); }
@@ -685,101 +685,217 @@ button:active { transform: translateY(1px) scale(0.97); filter: brightness(0.95)
 }
 .msg:hover { background: rgba(255,255,255,0.055); border-color: rgba(0,240,255,0.45); }
 
-/* Bienvenida */
-.bienvenida {
+/* ── TARJETA BASE ───────────────────────────────────────────── */
+.tarjeta {
   position: relative; overflow: hidden;
-  background: linear-gradient(135deg, rgba(0,255,136,0.14), rgba(0,170,255,0.11), rgba(255,0,170,0.11));
-  border: 1px solid rgba(0,255,136,0.38);
-  color: white;
-  font-family: 'Orbitron', sans-serif; font-weight: 700;
-  padding: 9px 12px; border-radius: 12px; margin: 5px 0;
-  text-align: center;
-  font-size: clamp(11px, calc(var(--tam) + 1px), 22px);
-  letter-spacing: 0.4px;
-  box-shadow: 0 0 18px rgba(0,255,136,0.22), 0 3px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.09);
-  animation: entrar 0.5s cubic-bezier(.34,1.56,.64,1);
-  flex-shrink: 0;
-}
-.bienvenida::before {
-  content: '';
-  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.11), transparent);
-  animation: shimmerSlide 2.5s ease-in-out infinite; pointer-events: none;
-}
-.bienvenida::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, #00FF88, #00AAFF, transparent);
+  border-radius: 13px; margin: 5px 0;
+  padding: 0; flex-shrink: 0;
+  animation: entrarTarjeta 0.45s cubic-bezier(.34,1.56,.64,1);
 }
 
-/* Follow */
-.follow {
-  position: relative; overflow: hidden;
-  background: linear-gradient(135deg, rgba(255,0,170,0.16), rgba(191,0,255,0.13));
-  border: 1px solid rgba(255,0,170,0.40);
-  color: white;
-  font-family: 'Orbitron', sans-serif; font-weight: 700;
-  padding: 9px 12px; border-radius: 12px; margin: 5px 0;
-  text-align: center;
-  font-size: clamp(11px, calc(var(--tam) + 1px), 22px);
-  letter-spacing: 0.4px;
-  box-shadow: 0 0 20px rgba(255,0,170,0.26), 0 3px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.09);
-  animation: entrar 0.5s cubic-bezier(.34,1.56,.64,1);
-  flex-shrink: 0;
-}
-.follow::before {
+/* Línea superior de color */
+.tarjeta::after {
   content: '';
-  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
-  animation: shimmerSlide 2s ease-in-out infinite; pointer-events: none;
-}
-.follow::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, #FF00AA, #BF00FF, transparent);
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  border-radius: 13px 13px 0 0;
 }
 
-/* Regalo base */
-.regalo {
-  position: relative; overflow: hidden;
-  font-family: 'Rajdhani', sans-serif; font-weight: 700;
-  padding: 9px 12px; border-radius: 12px; margin: 5px 0;
-  text-align: center;
-  font-size: clamp(11px, calc(var(--tam) + 1px), 22px);
-  letter-spacing: 0.3px;
-  animation: entrar 0.5s cubic-bezier(.34,1.56,.64,1);
-  flex-shrink: 0;
-}
-.regalo::before {
+/* Shimmer sweep */
+.tarjeta::before {
   content: '';
-  position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.11), transparent);
-  animation: shimmerSlide 2.2s ease-in-out infinite; pointer-events: none;
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: shimmerSlide 3s ease-in-out infinite;
+  pointer-events: none; z-index: 2;
 }
-.regalo::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  border-radius: 12px 12px 0 0;
+
+.tarjeta-inner {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
 }
-.regalo.comun      { background: linear-gradient(135deg, rgba(80,80,100,0.48), rgba(110,110,130,0.38)); border: 1px solid rgba(160,160,190,0.28); box-shadow: 0 0 8px rgba(150,150,180,0.18), 0 3px 12px rgba(0,0,0,0.4); }
-.regalo.comun::after { background: linear-gradient(90deg, transparent, #aaaacc, transparent); }
-.regalo.raro       { background: linear-gradient(135deg, rgba(0,60,180,0.48), rgba(0,140,220,0.38)); border: 1px solid rgba(0,153,238,0.42); box-shadow: 0 0 16px rgba(0,153,238,0.32), 0 3px 14px rgba(0,0,0,0.4); }
-.regalo.raro::after { background: linear-gradient(90deg, transparent, #0099EE, transparent); }
-.regalo.epico      { background: linear-gradient(135deg, rgba(100,0,180,0.52), rgba(200,0,140,0.42)); border: 1px solid rgba(238,0,170,0.46); box-shadow: 0 0 22px rgba(238,0,170,0.36), 0 3px 16px rgba(0,0,0,0.4); }
-.regalo.epico::after { background: linear-gradient(90deg, transparent, #EE00AA, #7700CC, transparent); }
-.regalo.legendario {
-  background: linear-gradient(135deg, rgba(200,80,0,0.52), rgba(220,170,0,0.48), rgba(200,80,0,0.52));
+
+.tarjeta-icono {
+  font-size: 1.6em; line-height: 1; flex-shrink: 0;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+.tarjeta-contenido {
+  flex: 1; min-width: 0;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: clamp(11px, calc(var(--tam) - 1px), 18px);
+  line-height: 1.3;
+  overflow: hidden;
+}
+
+.tarjeta-nombre {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(10px, calc(var(--tam) - 2px), 16px);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.tarjeta-sub {
+  font-size: clamp(9px, calc(var(--tam) - 4px), 13px);
+  opacity: 0.75;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── JOIN (bienvenida) ──────────────────────────────────────── */
+.tarjeta-join {
+  background: linear-gradient(135deg, rgba(0,255,136,0.12), rgba(0,170,255,0.09));
+  border: 1px solid rgba(0,255,136,0.35);
+  box-shadow: 0 0 16px rgba(0,255,136,0.18), 0 3px 12px rgba(0,0,0,0.4);
+}
+.tarjeta-join::after { background: linear-gradient(90deg, #00FF88, #00AAFF); }
+.tarjeta-join .tarjeta-nombre { color: #00FF88; }
+.tarjeta-join .tarjeta-sub    { color: rgba(0,255,200,0.7); }
+
+/* ── FOLLOW ─────────────────────────────────────────────────── */
+.tarjeta-follow {
+  background: linear-gradient(135deg, rgba(255,0,170,0.14), rgba(191,0,255,0.10));
+  border: 1px solid rgba(255,0,170,0.38);
+  box-shadow: 0 0 18px rgba(255,0,170,0.22), 0 3px 12px rgba(0,0,0,0.4);
+}
+.tarjeta-follow::after { background: linear-gradient(90deg, #FF00AA, #BF00FF); }
+.tarjeta-follow .tarjeta-nombre { color: #FF66CC; }
+.tarjeta-follow .tarjeta-sub    { color: rgba(255,100,200,0.7); }
+
+/* ── SHARE ──────────────────────────────────────────────────── */
+.tarjeta-share {
+  background: linear-gradient(135deg, rgba(0,170,255,0.12), rgba(0,240,255,0.09));
+  border: 1px solid rgba(0,200,255,0.32);
+  box-shadow: 0 0 14px rgba(0,200,255,0.18), 0 3px 12px rgba(0,0,0,0.4);
+}
+.tarjeta-share::after { background: linear-gradient(90deg, #00AAFF, #00F0FF); }
+.tarjeta-share .tarjeta-nombre { color: #00CCFF; }
+.tarjeta-share .tarjeta-sub    { color: rgba(0,200,255,0.7); }
+
+/* ── SUBSCRIBE ──────────────────────────────────────────────── */
+.tarjeta-subscribe {
+  background: linear-gradient(135deg, rgba(255,215,0,0.14), rgba(255,136,0,0.10));
+  border: 1px solid rgba(255,215,0,0.42);
+  box-shadow: 0 0 20px rgba(255,215,0,0.22), 0 3px 12px rgba(0,0,0,0.4);
+}
+.tarjeta-subscribe::after { background: linear-gradient(90deg, #FFD700, #FF8800); }
+.tarjeta-subscribe .tarjeta-nombre { color: #FFD700; }
+.tarjeta-subscribe .tarjeta-sub    { color: rgba(255,200,0,0.7); }
+
+/* ── REGALO ─────────────────────────────────────────────────── */
+.tarjeta-regalo {
+  background: linear-gradient(135deg, rgba(80,80,100,0.45), rgba(110,110,130,0.35));
+  border: 1px solid rgba(160,160,190,0.25);
+  box-shadow: 0 0 8px rgba(150,150,180,0.15), 0 3px 12px rgba(0,0,0,0.4);
+}
+.tarjeta-regalo::after { background: linear-gradient(90deg, #aaaacc, #ccccee); }
+.tarjeta-regalo .tarjeta-nombre { color: #ccccee; }
+
+.tarjeta-regalo.raro {
+  background: linear-gradient(135deg, rgba(0,60,180,0.45), rgba(0,140,220,0.35));
+  border-color: rgba(0,153,238,0.40);
+  box-shadow: 0 0 16px rgba(0,153,238,0.28), 0 3px 14px rgba(0,0,0,0.4);
+}
+.tarjeta-regalo.raro::after { background: linear-gradient(90deg, #0077CC, #00AAFF); }
+.tarjeta-regalo.raro .tarjeta-nombre { color: #44BBFF; }
+
+.tarjeta-regalo.epico {
+  background: linear-gradient(135deg, rgba(100,0,180,0.50), rgba(200,0,140,0.40));
+  border-color: rgba(238,0,170,0.44);
+  box-shadow: 0 0 22px rgba(238,0,170,0.32), 0 3px 16px rgba(0,0,0,0.4);
+}
+.tarjeta-regalo.epico::after { background: linear-gradient(90deg, #AA00FF, #FF00AA); }
+.tarjeta-regalo.epico .tarjeta-nombre { color: #FF66DD; }
+
+.tarjeta-regalo.legendario {
+  background: linear-gradient(135deg, rgba(200,80,0,0.50), rgba(220,170,0,0.45), rgba(200,80,0,0.50));
   background-size: 200% 200%;
-  border: 1px solid rgba(255,215,0,0.55);
-  color: rgba(255,255,220,0.95);
-  box-shadow: 0 0 32px rgba(255,215,0,0.45), 0 0 65px rgba(255,102,0,0.22), 0 3px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,200,0.18);
-  animation: brillar 1.5s ease-in-out infinite alternate, entrar 0.5s cubic-bezier(.34,1.56,.64,1);
+  border-color: rgba(255,215,0,0.55);
+  box-shadow: 0 0 30px rgba(255,215,0,0.42), 0 0 60px rgba(255,102,0,0.20), 0 3px 18px rgba(0,0,0,0.5);
+  animation: brillar 1.5s ease-in-out infinite alternate, entrarTarjeta 0.45s cubic-bezier(.34,1.56,.64,1);
 }
-.regalo.legendario::after { background: linear-gradient(90deg, transparent, #FFD700, #FF6600, transparent); }
+.tarjeta-regalo.legendario::after { background: linear-gradient(90deg, #FF6600, #FFD700, #FF6600); }
+.tarjeta-regalo.legendario .tarjeta-nombre { color: #FFD700; text-shadow: 0 0 10px #FFD700; }
 
-/* ══════════════════════════════════════════════════════════════
-   OVERLAY ALERTA, BOTÓN ?, MODAL AYUDA
-   ══════════════════════════════════════════════════════════════ */
+/* Diamantes badge */
+.diamantes-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(9px, calc(var(--tam) - 5px), 12px);
+  font-weight: 700;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,215,0,0.4);
+  border-radius: 6px;
+  padding: 2px 7px;
+  color: var(--oro);
+  text-shadow: 0 0 6px var(--oro);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── ANIMACIÓN ENTRADA TARJETA ──────────────────────────────── */
+@keyframes entrarTarjeta {
+  0%   { transform: translateX(-40px) scale(0.92); opacity: 0; }
+  60%  { transform: translateX(4px) scale(1.02); opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+
+/* ── PANTALLA JUEGOS MEJORADA ───────────────────────────────── */
+.pantalla-3d {
+  position: relative;
+  flex: 1;
+  min-height: 100px;
+  border: 2px solid var(--t2);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(13px, calc(var(--tam) * 1.7), 42px);
+  font-weight: 700;
+  text-shadow: 0 0 25px white, 0 0 50px var(--t1);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 30%, rgba(120,0,200,0.6) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 100%, rgba(0,0,40,0.8) 0%, rgba(5,0,25,0.98) 100%);
+  text-align: center;
+  line-height: 1.3;
+  padding: 8px;
+  overflow: hidden;
+  word-break: break-word;
+  animation: holoShimmer 5s ease-in-out infinite;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.pantalla-3d::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px);
+  border-radius: inherit; pointer-events: none; z-index: 1;
+}
+.pantalla-3d::after {
+  content: '';
+  position: absolute; top: -50%; left: -60%; width: 60%; height: 200%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, rgba(0,240,255,0.08) 55%, transparent 65%);
+  animation: holoSweep 4s ease-in-out infinite;
+  pointer-events: none; z-index: 2;
+}
+.pantalla-3d > * { position: relative; z-index: 3; }
+
+/* Estado activo de la pantalla (cuando hay resultado) */
+.pantalla-3d.activa {
+  border-color: var(--t1);
+  box-shadow: 0 0 30px var(--t1), 0 0 60px rgba(0,240,255,0.2), inset 0 0 30px rgba(0,240,255,0.08);
+}
+
+/* Subtítulo en pantalla */
+.pantalla-sub {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: clamp(10px, calc(var(--tam) - 3px), 15px);
+  font-weight: 500;
+  color: rgba(200,220,255,0.6);
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
 .overlay-alerta {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   display: flex; justify-content: center; align-items: center;
