@@ -561,15 +561,38 @@ function cargarVoces() {
 cargarVoces();
 window.speechSynthesis.onvoiceschanged = cargarVoces;
 
+// ─── MANTENER AUDIO ACTIVO EN SEGUNDO PLANO ───────────────────────────────────
+// Crea un nodo silencioso que evita que el navegador suspenda el AudioContext
+function mantenerAudioActivo() {
+  try {
+    const ctx  = getAudioCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0; // silencioso
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    // No lo detenemos — corre en silencio para mantener el contexto vivo
+  } catch(e) {}
+}
+
+// Reanudar audio cuando la pestaña vuelve a estar activa
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().then(() => procesarColaVoz());
+    }
+  }
+});
+
 // Desbloquear voz con el primer click del usuario
 document.addEventListener('click', function() {
   if (vozDesbloqueada) return;
   vozDesbloqueada = true;
-  // Hablar silenciosamente para desbloquear el contexto del navegador
   const u = new SpeechSynthesisUtterance(' ');
   u.volume = 0;
   window.speechSynthesis.speak(u);
-  // Procesar cola si había mensajes esperando
+  mantenerAudioActivo();
   setTimeout(procesarColaVoz, 200);
 }, { once: true });
 
