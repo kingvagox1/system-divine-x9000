@@ -317,13 +317,7 @@ function manejarChat(data) {
   }
 
   sonar('mensaje');
-  // Lee el mensaje en voz, cola máximo 10
-  if (colaVoz.length < 10) {
-    hablar(`${data.nombre}: ${data.texto}`);
-  } else {
-    const el = document.getElementById('texto-voz');
-    if (el) el.innerText = `${data.nombre}: ${data.texto}`;
-  }
+  hablar(`${data.nombre}: ${data.texto}`);
 }
 
 function manejarJoin(data) {
@@ -582,12 +576,10 @@ document.addEventListener('click', function() {
 function hablar(texto) {
   if (mutado) return;
   const corto = texto.length > 100 ? texto.substring(0, 100) + '...' : texto;
-  // Actualizar barra de voz siempre
   const el = document.getElementById('texto-voz');
   if (el) el.innerText = corto;
-
-  if (!vozDesbloqueada) return; // esperar primer click
-  if (colaVoz.length < 3) colaVoz.push(corto);
+  if (!vozDesbloqueada) return;
+  if (colaVoz.length < 10) colaVoz.push(corto);
   procesarColaVoz();
 }
 
