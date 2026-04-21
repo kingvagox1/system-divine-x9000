@@ -692,6 +692,17 @@ function juegoSorteo() {
   participantesSorteo = [];
 }
 
+// ─── PRUEBA DE SALUDO ─────────────────────────────────────────────────────────
+const nombresPrueba = ['Carlos','María','Juan','Sofía','Pedro','Valentina','Diego','Camila','Andrés','Lucía'];
+function probarSaludo() {
+  const nombre = nombresPrueba[Math.floor(Math.random() * nombresPrueba.length)];
+  manejarJoin({
+    usuario: nombre.toLowerCase(),
+    nombre:  nombre,
+    avatar:  ''
+  });
+}
+
 // ─── AYUDA ────────────────────────────────────────────────────────────────────
 function toggleAyuda() {
   document.getElementById('ayuda-overlay').classList.toggle('visible');
