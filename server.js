@@ -1,55 +1,56 @@
 const express    = require('express');
 const http       = require('http');
 const { Server } = require('socket.io');
-const { WebcastPushConnection } = require('tiktok-live-connector');
+const { TikTokLiveConnection } = require('tiktok-live-connector');
 
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  },
+  cors: { origin: '*', methods: ['GET','POST'] },
   allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000,
   transports: ['polling', 'websocket']
 });
 
-// ─── Archivos estáticos ────────────────────────────────────────────────────────
 app.use(express.static(__dirname));
 app.use(express.json());
 
 const PORT = process.env.PORT || 8080;
 
-// ─── Estado global ─────────────────────────────────────────────────────────────
+// ─── Estado ───────────────────────────────────────────────────────────────────
 let tiktokConnection   = null;
 let usuarioActual      = null;
 let reconectando       = false;
 let intentosReconexion = 0;
 const MAX_INTENTOS     = 5;
 
-let totalLikes     = 0;
-let totalViewers   = 0;
-let totalDiamantes = 0;
-let totalGifts     = 0;
-let totalFollows   = 0;
-let totalMensajes  = 0;
+let totalLikes = 0, totalViewers = 0, totalDiamantes = 0;
+let totalGifts = 0, totalFollows = 0, totalMensajes  = 0;
 
-// Historial de los últimos 100 eventos para nuevos clientes
 const historialEventos = [];
-function guardarEvento(evento) {
-  historialEventos.push({ ...evento, ts: Date.now() });
+function guardarEvento(e) {
+  historialEventos.push({ ...e, ts: Date.now() });
   if (historialEventos.length > 100) historialEventos.shift();
 }
-
 function resetStats() {
   totalLikes = 0; totalViewers = 0; totalDiamantes = 0;
   totalGifts = 0; totalFollows = 0; totalMensajes  = 0;
   historialEventos.length = 0;
 }
 
-// ─── CONECTAR TIKTOK ──────────────────────────────────────────────────────────
+// ─── Helper: extraer datos de usuario ────────────────────────────────────────
+// En v2 los datos vienen en data.user.uniqueId / data.user.nickname
+function getUser(data) {
+  const u = data.user || data;
+  return {
+    usuario: u.uniqueId  || u.uniqueId  || 'usuario',
+    nombre:  u.nickname  || u.uniqueId  || 'usuario',
+    avatar:  u.profilePictureUrl || u.avatarThumb?.urlList?.[0] || ''
+  };
+}
+
+// ─── CONECTAR ─────────────────────────────────────────────────────────────────
 function conectarTikTok(username) {
   if (tiktokConnection) {
     try { tiktokConnection.disconnect(); } catch(e) {}
@@ -62,62 +63,51 @@ function conectarTikTok(username) {
 
   console.log(`\n🔗 Conectando a @${username}...`);
 
-  tiktokConnection = new WebcastPushConnection(username);
+  tiktokConnection = new TikTokLiveConnection(username, {
+    enableExtendedGiftInfo: true,
+    requestPollingIntervalMs: 2000
+  });
 
   tiktokConnection.connect()
     .then(state => {
       intentosReconexion = 0;
       console.log(`✅ Conectado a @${username} | Room: ${state.roomId}`);
-
-      io.emit('estado', {
-        conectado: true,
-        usuario:   username,
-        roomId:    state.roomId || ''
-      });
-
-      // Stats iniciales del live
-      const statsIniciales = {
+      io.emit('estado', { conectado: true, usuario: username, roomId: state.roomId || '' });
+      io.emit('stats', {
         viewers:   state.viewerCount || 0,
         likes:     state.likeCount   || 0,
-        diamantes: 0,
-        follows:   0,
-        gifts:     0,
-        mensajes:  0
-      };
-      io.emit('stats', statsIniciales);
+        diamantes: 0, follows: 0, gifts: 0, mensajes: 0
+      });
     })
     .catch(err => {
       const msg = err.message || String(err);
-      console.error(`❌ Error conectando @${username}: ${msg}`);
-
-      let errorClaro = msg;
-      if (msg.toLowerCase().includes('live') || msg.toLowerCase().includes('offline')) {
+      console.error(`❌ Error @${username}: ${msg}`);
+      let errorClaro = `No se pudo conectar a @${username}`;
+      if (msg.toLowerCase().includes('live') || msg.toLowerCase().includes('offline') || msg.toLowerCase().includes('not live')) {
         errorClaro = `@${username} no está en vivo ahora mismo`;
       } else if (msg.includes('not found') || msg.includes('404') || msg.includes('User not found')) {
-        errorClaro = `Usuario @${username} no encontrado en TikTok`;
-      } else if (msg.includes('rate limit') || msg.includes('429')) {
+        errorClaro = `Usuario @${username} no encontrado`;
+      } else if (msg.includes('rate') || msg.includes('429')) {
         errorClaro = 'Demasiadas peticiones, espera un momento';
       } else if (msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND')) {
         errorClaro = 'Sin conexión a internet';
       }
-
       io.emit('estado', { conectado: false, error: errorClaro });
-
       const noReconectar = msg.includes('not found') || msg.includes('404') || msg.includes('User not found');
       if (!noReconectar) intentarReconexion();
     });
 
   // ── CHAT ──────────────────────────────────────────────────────────────────
   tiktokConnection.on('chat', data => {
-    if (!data.comment || data.comment.trim() === '') return; // ignorar mensajes vacíos
+    const comment = data.comment || '';
+    if (!comment.trim()) return;
     totalMensajes++;
+    const u = getUser(data);
     const evento = {
       tipo:    'chat',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      texto:   data.comment.trim(),
-      avatar:  data.profilePictureUrl || '',
-      rol:     data.isModerator ? 'mod' : (data.isSubscriber ? 'vip' : 'normal')
+      ...u,
+      texto:   comment.trim(),
+      rol:     data.user?.isModerator ? 'mod' : (data.user?.isSubscriber ? 'vip' : 'normal')
     };
     guardarEvento(evento);
     io.emit('evento', evento);
@@ -125,108 +115,74 @@ function conectarTikTok(username) {
 
   // ── MEMBER JOIN ───────────────────────────────────────────────────────────
   tiktokConnection.on('member', data => {
-    const evento = {
-      tipo:    'join',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      avatar:  data.profilePictureUrl || ''
-    };
+    const u = getUser(data);
+    const evento = { tipo: 'join', ...u };
     guardarEvento(evento);
     io.emit('evento', evento);
-    console.log(`👤 Entró: @${data.uniqueId}`);
+    console.log(`👤 Entró: @${u.usuario}`);
   });
 
   // ── FOLLOW ────────────────────────────────────────────────────────────────
   tiktokConnection.on('follow', data => {
     totalFollows++;
-    const evento = {
-      tipo:    'follow',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      avatar:  data.profilePictureUrl || ''
-    };
+    const u = getUser(data);
+    const evento = { tipo: 'follow', ...u };
     guardarEvento(evento);
     io.emit('evento', evento);
     io.emit('stats', { follows: totalFollows });
-    console.log(`❤️  Follow: @${data.uniqueId}`);
+    console.log(`❤️  Follow: @${u.usuario}`);
   });
 
   // ── LIKE ──────────────────────────────────────────────────────────────────
   tiktokConnection.on('like', data => {
     totalLikes = data.totalLikeCount || (totalLikes + (data.likeCount || 1));
-    const evento = {
-      tipo:    'like',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      likes:   data.likeCount || 1,
-      total:   totalLikes
-    };
-    io.emit('evento', evento);
+    const u = getUser(data);
+    io.emit('evento', { tipo: 'like', ...u, likes: data.likeCount || 1, total: totalLikes });
     io.emit('stats', { likes: totalLikes });
   });
 
   // ── GIFT ──────────────────────────────────────────────────────────────────
   tiktokConnection.on('gift', data => {
-    if (data.giftType === 1 && !data.repeatEnd) return;
+    const giftType = data.giftDetails?.giftType ?? data.giftType;
+    if (giftType === 1 && !data.repeatEnd) return;
 
     const cantidad  = data.repeatCount  || 1;
-    const diamantes = (data.diamondCount || 0) * cantidad;
+    const giftName  = data.giftDetails?.giftName || data.giftName || 'Regalo';
+    const diamonds  = data.giftDetails?.diamondCount ?? data.diamondCount ?? 0;
+    const diamantes = diamonds * cantidad;
     totalDiamantes += diamantes;
     totalGifts++;
 
-    const evento = {
-      tipo:          'gift',
-      usuario:       data.uniqueId || 'usuario',
-      nombre:        data.nickname || data.uniqueId || 'usuario',
-      avatar:        data.profilePictureUrl || '',
-      regalo:        data.giftName || 'Regalo',
-      cantidad,
-      diamantes,
-      totalDiamantes
-    };
+    const u = getUser(data);
+    const evento = { tipo: 'gift', ...u, regalo: giftName, cantidad, diamantes, totalDiamantes };
     guardarEvento(evento);
     io.emit('evento', evento);
     io.emit('stats', { diamantes: totalDiamantes, gifts: totalGifts });
-    console.log(`🎁 @${data.uniqueId} → ${cantidad}x ${data.giftName} (💎${diamantes})`);
+    console.log(`🎁 @${u.usuario} → ${cantidad}x ${giftName} (💎${diamantes})`);
   });
 
   // ── SHARE ─────────────────────────────────────────────────────────────────
   tiktokConnection.on('share', data => {
-    const evento = {
-      tipo:    'share',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      avatar:  data.profilePictureUrl || ''
-    };
+    const u = getUser(data);
+    const evento = { tipo: 'share', ...u };
     guardarEvento(evento);
     io.emit('evento', evento);
-    console.log(`🔗 Share: @${data.uniqueId}`);
+    console.log(`🔗 Share: @${u.usuario}`);
   });
 
   // ── SUBSCRIBE ─────────────────────────────────────────────────────────────
   tiktokConnection.on('subscribe', data => {
-    const evento = {
-      tipo:    'subscribe',
-      usuario: data.uniqueId || 'usuario',
-      nombre:  data.nickname || data.uniqueId || 'usuario',
-      avatar:  data.profilePictureUrl || ''
-    };
+    const u = getUser(data);
+    const evento = { tipo: 'subscribe', ...u };
     guardarEvento(evento);
     io.emit('evento', evento);
-    console.log(`⭐ Subscribe: @${data.uniqueId}`);
+    console.log(`⭐ Subscribe: @${u.usuario}`);
   });
 
   // ── VIEWERS ───────────────────────────────────────────────────────────────
   tiktokConnection.on('roomUser', data => {
     totalViewers = data.viewerCount || 0;
-    io.emit('stats', {
-      viewers:   totalViewers,
-      likes:     totalLikes,
-      diamantes: totalDiamantes,
-      follows:   totalFollows,
-      gifts:     totalGifts,
-      mensajes:  totalMensajes
-    });
+    io.emit('stats', { viewers: totalViewers, likes: totalLikes, diamantes: totalDiamantes, follows: totalFollows, gifts: totalGifts, mensajes: totalMensajes });
   });
 
   // ── STREAM END ────────────────────────────────────────────────────────────
@@ -247,17 +203,16 @@ function conectarTikTok(username) {
   });
 
   // ── ERROR ─────────────────────────────────────────────────────────────────
-  tiktokConnection.on('error', err => {
-    console.error(`⚠️  Error TikTok: ${err.message || err}`);
-    io.emit('error_tiktok', { mensaje: err.message || 'Error desconocido' });
+  tiktokConnection.on('error', ({ info, exception }) => {
+    console.error(`⚠️  Error: ${info}`, exception?.message || '');
+    io.emit('error_tiktok', { mensaje: info || 'Error desconocido' });
   });
 }
 
-// ─── RECONEXIÓN AUTOMÁTICA ────────────────────────────────────────────────────
+// ─── RECONEXIÓN ───────────────────────────────────────────────────────────────
 function intentarReconexion() {
   if (!usuarioActual || reconectando) return;
   if (intentosReconexion >= MAX_INTENTOS) {
-    console.log(`❌ Máximo de intentos para @${usuarioActual}`);
     io.emit('estado', { conectado: false, error: `No se pudo reconectar (${MAX_INTENTOS} intentos)` });
     return;
   }
@@ -271,24 +226,11 @@ function intentarReconexion() {
 
 // ─── SOCKET.IO ────────────────────────────────────────────────────────────────
 io.on('connection', socket => {
-  console.log(`🖥️  Panel conectado (total: ${io.engine.clientsCount})`);
-
-  // Enviar estado actual al nuevo cliente que se conecta
+  console.log(`🖥️  Panel conectado`);
   if (usuarioActual) {
-    const conectado = !!tiktokConnection;
-    socket.emit('estado', { conectado, usuario: usuarioActual });
-    socket.emit('stats', {
-      viewers:   totalViewers,
-      likes:     totalLikes,
-      diamantes: totalDiamantes,
-      follows:   totalFollows,
-      gifts:     totalGifts,
-      mensajes:  totalMensajes
-    });
-    // Enviar historial reciente al nuevo cliente
-    if (historialEventos.length > 0) {
-      socket.emit('historial', historialEventos.slice(-30));
-    }
+    socket.emit('estado', { conectado: !!tiktokConnection, usuario: usuarioActual });
+    socket.emit('stats', { viewers: totalViewers, likes: totalLikes, diamantes: totalDiamantes, follows: totalFollows, gifts: totalGifts, mensajes: totalMensajes });
+    if (historialEventos.length > 0) socket.emit('historial', historialEventos.slice(-30));
   }
 
   socket.on('cambiarUsuario', username => {
@@ -302,35 +244,14 @@ io.on('connection', socket => {
   socket.on('desconectar', () => {
     intentosReconexion = MAX_INTENTOS;
     usuarioActual = null;
-    if (tiktokConnection) {
-      try { tiktokConnection.disconnect(); } catch(e) {}
-      tiktokConnection = null;
-    }
+    if (tiktokConnection) { try { tiktokConnection.disconnect(); } catch(e) {} tiktokConnection = null; }
     console.log('🔌 Desconectado manualmente');
     io.emit('estado', { conectado: false, error: null });
   });
-
-  socket.on('disconnect', () => {
-    console.log(`🖥️  Panel desconectado (restantes: ${io.engine.clientsCount})`);
-  });
 });
 
-// ─── RUTAS API ────────────────────────────────────────────────────────────────
-app.get('/estado', (req, res) => {
-  res.json({
-    conectado: !!tiktokConnection,
-    usuario:   usuarioActual,
-    stats: {
-      viewers:   totalViewers,
-      likes:     totalLikes,
-      diamantes: totalDiamantes,
-      follows:   totalFollows,
-      gifts:     totalGifts,
-      mensajes:  totalMensajes
-    }
-  });
-});
-
+// ─── RUTAS ────────────────────────────────────────────────────────────────────
+app.get('/estado', (req, res) => res.json({ conectado: !!tiktokConnection, usuario: usuarioActual, stats: { viewers: totalViewers, likes: totalLikes, diamantes: totalDiamantes } }));
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
 
 // ─── ARRANCAR ─────────────────────────────────────────────────────────────────
@@ -339,16 +260,8 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`║   SYSTEM DIVINE X-9000  🔥       ║`);
   console.log(`║   Puerto: ${PORT}                   ║`);
   console.log(`╚══════════════════════════════════╝\n`);
-
-  if (process.env.TIKTOK_USER) {
-    conectarTikTok(process.env.TIKTOK_USER);
-  }
+  if (process.env.TIKTOK_USER) conectarTikTok(process.env.TIKTOK_USER);
 });
 
-// ─── MANEJO DE ERRORES GLOBALES ───────────────────────────────────────────────
-process.on('uncaughtException', err => {
-  console.error('💥 Error no capturado:', err.message);
-});
-process.on('unhandledRejection', err => {
-  console.error('💥 Promesa rechazada:', err);
-});
+process.on('uncaughtException',  err => console.error('💥 Error:', err.message));
+process.on('unhandledRejection', err => console.error('💥 Promesa:', err));
