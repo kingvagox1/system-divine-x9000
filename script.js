@@ -126,13 +126,27 @@ function _dibujarGrafica() {
 }
 
 // ─── SOCKET.IO ────────────────────────────────────────────────────────────────
-// Usar polling primero para Railway, luego upgrade a websocket
+// Configuración robusta para móvil y Railway
 const socket = io({
   transports: ['polling', 'websocket'],
   upgrade: true,
   reconnection: true,
-  reconnectionAttempts: 10,
-  reconnectionDelay: 2000
+  reconnectionAttempts: 15,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000,
+  forceNew: false
+});
+
+// Detectar problemas de conexión del socket
+socket.on('connect', () => {
+  console.log('✅ Socket conectado:', socket.id, '| Transport:', socket.io.engine.transport.name);
+});
+socket.on('connect_error', (err) => {
+  console.warn('⚠️ Socket error:', err.message);
+});
+socket.on('disconnect', (reason) => {
+  console.log('🔌 Socket desconectado:', reason);
 });
 
 socket.on('estado', data => {

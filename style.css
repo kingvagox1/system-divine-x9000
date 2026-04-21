@@ -1091,6 +1091,13 @@ button:active { transform: translateY(1px) scale(0.97); filter: brightness(0.95)
   /* Botones juegos ya son grid 2x2 */
   .juegos-botones button { padding: 9px 4px; font-size: 12px; }
 
+  /* Tarjetas en móvil */
+  .tarjeta-inner { padding: 7px 10px; gap: 8px; }
+  .tarjeta-icono { font-size: 1.3em; }
+  .tarjeta-nombre { font-size: 12px; }
+  .tarjeta-sub    { font-size: 10px; }
+  .diamantes-badge { font-size: 9px; padding: 1px 5px; }
+
   /* Ocultar gráfica en móvil */
   .grafica-wrap { display: none; }
 
