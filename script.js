@@ -194,7 +194,10 @@ socket.on('error_tiktok', data => {
 });
 
 // Cuando un cliente se reconecta, recibe el historial reciente
+// Sin voz para no saturar al cargar
 socket.on('historial', eventos => {
+  const vozAntes = mutado;
+  mutado = true; // silenciar durante historial
   eventos.forEach(data => {
     switch (data.tipo) {
       case 'chat':   manejarChat(data);   break;
@@ -204,6 +207,7 @@ socket.on('historial', eventos => {
       case 'share':  manejarShare(data);  break;
     }
   });
+  mutado = vozAntes; // restaurar estado de voz
 });
 
 // ─── SONIDOS ──────────────────────────────────────────────────────────────────
@@ -551,28 +555,23 @@ function ajustarTamano(cant) {
 let colaVoz        = [];
 let hablandoAhora  = false;
 let vozDesbloqueada = false;
-let vocesListas    = false;
 
 // Cargar voces disponibles (asíncrono en Chrome)
-function cargarVoces() {
-  const voces = window.speechSynthesis.getVoices();
-  if (voces.length > 0) vocesListas = true;
-}
-cargarVoces();
-window.speechSynthesis.onvoiceschanged = cargarVoces;
+window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 
 // ─── MANTENER AUDIO ACTIVO EN SEGUNDO PLANO ───────────────────────────────────
-// Crea un nodo silencioso que evita que el navegador suspenda el AudioContext
+let nodoSilencioso = null;
 function mantenerAudioActivo() {
+  if (nodoSilencioso) return; // ya está activo
   try {
     const ctx  = getAudioCtx();
     const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
-    gain.gain.value = 0; // silencioso
+    gain.gain.value = 0.0001; // casi silencioso
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    // No lo detenemos — corre en silencio para mantener el contexto vivo
+    nodoSilencioso = osc; // guardar referencia
   } catch(e) {}
 }
 
@@ -593,7 +592,11 @@ document.addEventListener('click', function() {
   u.volume = 0;
   window.speechSynthesis.speak(u);
   mantenerAudioActivo();
-  setTimeout(procesarColaVoz, 200);
+  document.getElementById('texto-voz').innerText = 'Sistema Divine X-9000 activo';
+  setTimeout(() => {
+    hablar('Sistema Divine X-9000 listo. Pon tu usuario de TikTok y conecta.');
+    procesarColaVoz();
+  }, 300);
 }, { once: true });
 
 function hablar(texto) {
@@ -757,7 +760,11 @@ function juegoTrivia(user) {
 
 function responderTrivia(usuario, texto) {
   if (!triviaActiva) return;
-  const resp = texto.toLowerCase().replace('!trivia','').trim();
+  // Extraer la respuesta — puede venir como "!trivia paris" o solo "paris"
+  const resp = texto.toLowerCase()
+    .replace(/!trivia\s*/i, '')
+    .trim();
+  if (!resp) return;
   if (resp === triviaActiva.pregunta.r) {
     const pts = 15;
     darPuntos(usuario, pts);
@@ -769,19 +776,21 @@ function responderTrivia(usuario, texto) {
 }
 
 function juegoPPT(user, texto) {
+  if (!texto) return;
   const opciones = ['piedra','papel','tijera'];
   const sistema  = opciones[Math.floor(Math.random() * 3)];
+  const txtLow   = texto.toLowerCase();
   let jugador    = '';
-  if (texto.includes('piedra')) jugador = 'piedra';
-  else if (texto.includes('papel')) jugador = 'papel';
-  else if (texto.includes('tijera')) jugador = 'tijera';
+  if (txtLow.includes('piedra'))      jugador = 'piedra';
+  else if (txtLow.includes('papel'))  jugador = 'papel';
+  else if (txtLow.includes('tijera')) jugador = 'tijera';
   else return;
 
   const gana = { piedra:'tijera', papel:'piedra', tijera:'papel' };
   let resultado;
-  if (jugador === sistema)          resultado = '🤝 EMPATE';
-  else if (gana[jugador] === sistema) { resultado = `🏆 ${user} GANA`; darPuntos(user, 8); }
-  else                               resultado = '💀 SISTEMA GANA';
+  if (jugador === sistema)                { resultado = '🤝 EMPATE'; }
+  else if (gana[jugador] === sistema)     { resultado = `🏆 ${user} GANA`; darPuntos(user, 8); }
+  else                                    { resultado = '💀 SISTEMA GANA'; }
 
   const emojis = { piedra:'🪨', papel:'📄', tijera:'✂️' };
   mostrarPantalla(`${emojis[jugador]} VS ${emojis[sistema]}\n${resultado}`);
@@ -822,7 +831,8 @@ function cerrarAyuda(e) {
 }
 
 // ─── INICIO ───────────────────────────────────────────────────────────────────
-hablar('Sistema Divine X-9000 cargado. Pon tu usuario de TikTok y conecta.');
+// No hablar al inicio — esperar primer click del usuario
+document.getElementById('texto-voz').innerText = 'Haz click en cualquier parte para activar la voz';
 
 
 // ─── RESIZE HANDLES ────────────────────────────────────────────────────────────
