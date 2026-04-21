@@ -10,12 +10,11 @@
 </head>
 <body>
 
-  <!-- ESTRELLAS DE FONDO -->
   <canvas id="particulas"></canvas>
 
   <div class="sistema-madre" id="sistema-madre">
 
-    <!-- ── CABECERA ── -->
+    <!-- CABECERA -->
     <div class="cabecera">
       <div class="cab-izq">
         <img id="avatar-streamer" class="avatar" src="" alt="" style="display:none">
@@ -24,54 +23,48 @@
       <div class="cab-info">
         <span id="estado-dot">🔴</span>
         <span id="estado-txt">OFFLINE</span>
-        &nbsp;|&nbsp;
-        👁️ <span id="viewers">0</span>
-        &nbsp;|&nbsp;
-        ❤️ <span id="total-likes">0</span>
-        &nbsp;|&nbsp;
-        💎 <span id="total-diamantes">0</span>
+        &nbsp;|&nbsp; 👁️ <span id="viewers">0</span>
+        &nbsp;|&nbsp; ❤️ <span id="total-likes">0</span>
+        &nbsp;|&nbsp; 💎 <span id="total-diamantes">0</span>
       </div>
       <div class="cab-controles">
-        <!-- Selector de tema -->
         <div class="temas">
-          <button class="btn-tema activo" data-tema="azul"   onclick="cambiarTema('azul',this)"   title="Azul">🔵</button>
-          <button class="btn-tema"        data-tema="verde"  onclick="cambiarTema('verde',this)"  title="Verde">🟢</button>
-          <button class="btn-tema"        data-tema="rojo"   onclick="cambiarTema('rojo',this)"   title="Rojo">🔴</button>
-          <button class="btn-tema"        data-tema="oro"    onclick="cambiarTema('oro',this)"    title="Oro">🟡</button>
-          <button class="btn-tema"        data-tema="rosa"   onclick="cambiarTema('rosa',this)"   title="Rosa">🩷</button>
+          <button class="btn-tema activo" onclick="cambiarTema('azul',this)"  title="Azul">🔵</button>
+          <button class="btn-tema"        onclick="cambiarTema('verde',this)" title="Verde">🟢</button>
+          <button class="btn-tema"        onclick="cambiarTema('rojo',this)"  title="Rojo">🔴</button>
+          <button class="btn-tema"        onclick="cambiarTema('oro',this)"   title="Oro">🟡</button>
+          <button class="btn-tema"        onclick="cambiarTema('rosa',this)"  title="Rosa">🩷</button>
         </div>
-        <button class="btn-tam" onclick="ajustarTamano(-2)">A-</button>
-        <button class="btn-tam" onclick="ajustarTamano(+2)">A+</button>
+        <button class="btn-tam"  onclick="ajustarTamano(-2)">A-</button>
+        <button class="btn-tam"  onclick="ajustarTamano(+2)">A+</button>
         <button class="btn-mute" id="btn-mute" onclick="toggleMute()">🔊</button>
       </div>
     </div>
 
-    <!-- ── PANEL CONEXIÓN TIKTOK ── -->
+    <!-- PANEL TIKTOK -->
     <div class="panel-tiktok">
       <span class="panel-label">🎵 TIKTOK:</span>
       <input id="input-usuario" type="text" placeholder="@usuario"
              onkeydown="if(event.key==='Enter') conectarTikTok()" />
       <button onclick="conectarTikTok()">🔗 CONECTAR</button>
       <button onclick="desconectar()" id="btn-desconectar" style="display:none">⛔ SALIR</button>
-      <!-- Meta diamantes editable -->
-      <span class="panel-label" style="margin-left:8px">🎯 META:</span>
-      <input id="input-meta" type="number" placeholder="1000" min="1"
-             style="width:80px" onchange="actualizarMeta()" />
+      <span class="panel-label">🎯 META:</span>
+      <input id="input-meta" type="number" placeholder="1000" min="1" onchange="actualizarMeta()" />
       <div class="reconectando" id="reconectando" style="display:none">
         <span class="spinner"></span> Reconectando...
       </div>
     </div>
 
-    <!-- ── BARRA DE DIAMANTES ── -->
+    <!-- BARRA DIAMANTES -->
     <div class="barra-diamantes-wrap">
       <span>💎</span>
       <div class="barra-diamantes-bg">
         <div class="barra-diamantes-fill" id="barra-fill"></div>
-        <span class="barra-diamantes-txt" id="barra-txt">0 / 1000</span>
+        <span class="barra-diamantes-txt"  id="barra-txt">0 / 1000</span>
       </div>
     </div>
 
-    <!-- ── TABS MÓVIL ── -->
+    <!-- TABS MÓVIL -->
     <div class="tabs-movil">
       <button class="tab-btn activo" onclick="cambiarTab('izq',this)">👥</button>
       <button class="tab-btn"        onclick="cambiarTab('chat',this)">💬 <span class="badge-chat" id="badge-chat" style="display:none">●</span></button>
@@ -79,32 +72,33 @@
       <button class="tab-btn"        onclick="cambiarTab('puntos',this)">🏆</button>
     </div>
 
-    <!-- ── ZONA CENTRAL ── -->
+    <!-- ZONA CENTRAL -->
     <div class="zona-central">
 
-      <!-- Actividad -->
+      <!-- ACTIVIDAD -->
       <div class="columna tab-visible" id="col-izq">
         <h2>👥 ACTIVIDAD</h2>
+        <!-- Las tarjetas se insertan aquí por JS -->
       </div>
 
-      <!-- Chat -->
+      <!-- CHAT -->
       <div class="columna" id="col-chat">
         <h2>💬 CHAT LIVE
           <span class="comandos-hint">!dado · !magia · !pelea · !ruleta · !8ball · !trivia · !ppt · !sorteo</span>
         </h2>
-        <!-- Filtro spam -->
         <div class="filtro-wrap">
-          <input id="input-filtro" type="text" placeholder="🚫 Filtrar palabra..." />
+          <input id="input-filtro" type="text" placeholder="🚫 Filtrar..." />
           <button onclick="agregarFiltro()">+</button>
         </div>
         <div id="filtros-lista" class="filtros-lista"></div>
+        <!-- Área scrollable de mensajes -->
+        <div class="chat-mensajes" id="chat-mensajes"></div>
       </div>
 
-      <!-- Juegos -->
-      <div class="columna col-juegos" id="col-juegos">
+      <!-- JUEGOS -->
+      <div class="columna" id="col-juegos">
         <h2>🎮 JUEGOS</h2>
         <div class="pantalla-3d" id="pantalla-juegos">✨ LISTO ✨</div>
-        <!-- Contador regresivo -->
         <div class="contador-wrap" id="contador-wrap" style="display:none">
           <div class="contador" id="contador">10</div>
           <button onclick="detenerContador()">⏹</button>
@@ -122,27 +116,27 @@
         </div>
       </div>
 
-      <!-- Tabla de puntos -->
-      <div class="columna col-puntos" id="col-puntos">
+      <!-- PUNTOS -->
+      <div class="columna" id="col-puntos">
         <h2>🏆 PUNTOS</h2>
         <div id="tabla-puntos"></div>
-        <button onclick="resetearPuntos()" style="margin-top:10px;width:100%">🗑️ Resetear</button>
+        <button onclick="resetearPuntos()" style="margin-top:8px;width:100%;flex-shrink:0">🗑️ Resetear</button>
       </div>
 
     </div>
 
-    <!-- ── GRÁFICA VIEWERS ── -->
+    <!-- GRÁFICA -->
     <div class="grafica-wrap">
       <span class="grafica-label">📊 VIEWERS</span>
-      <canvas id="grafica-viewers" height="40"></canvas>
+      <canvas id="grafica-viewers" height="36"></canvas>
     </div>
 
-    <!-- ── BARRA DE VOZ ── -->
+    <!-- VOZ -->
     <div class="barra-voz">🤖 <span id="texto-voz">Sistema activo y listo</span></div>
 
   </div>
 
-  <!-- OVERLAY ALERTA ÉPICA -->
+  <!-- OVERLAY ALERTA -->
   <div class="overlay-alerta" id="overlay-alerta"></div>
 
   <!-- BOTÓN ? -->
@@ -154,14 +148,14 @@
       <button class="ayuda-cerrar" onclick="toggleAyuda()">✕</button>
       <h2>🎮 GUÍA DE JUEGOS</h2>
       <div class="ayuda-lista">
-        <div class="ayuda-item"><div class="ayuda-icono">🎲</div><div class="ayuda-texto"><strong>!dado</strong><p>Tira un dado del 1 al 6. Gana puntos si saca 6.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">🔮</div><div class="ayuda-texto"><strong>!magia</strong><p>El oráculo revela tu destino. 25 resultados posibles: Futuro Brillante, Rey, Peligro, Diamante, Traición, Campeón, Riqueza, Amor y muchos más. ¡Nunca sabes!</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">⚔️</div><div class="ayuda-texto"><strong>!pelea</strong><p>Tú vs El Sistema. El mayor poder gana. Ganas puntos si vences.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">🔄</div><div class="ayuda-texto"><strong>!ruleta</strong><p>Gira la ruleta: 🥇 Primero, 🥈 Segundo, 🤡 Payaso, 👑 Rey, 🎉 Fiesta.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">🎱</div><div class="ayuda-texto"><strong>!8ball</strong><p>Pregúntale a la bola mágica. Responde sí, no o quizás.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">🧠</div><div class="ayuda-texto"><strong>!trivia</strong><p>Responde la pregunta correcta y gana puntos.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">✂️</div><div class="ayuda-texto"><strong>!ppt</strong><p>Piedra, Papel o Tijera contra el sistema. Escribe !piedra, !papel o !tijera.</p></div></div>
-        <div class="ayuda-item"><div class="ayuda-icono">🏆</div><div class="ayuda-texto"><strong>!sorteo</strong><p>Entra al sorteo. El streamer elige al ganador desde el panel.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🎲</div><div class="ayuda-texto"><strong>!dado</strong><p>Tira un dado del 1 al 6. Saca 6 y ganas +10 puntos.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🔮</div><div class="ayuda-texto"><strong>!magia</strong><p>25 destinos posibles: Rey, Peligro, Diamante, Traición, Riqueza, Amor y más. ¡Nunca sabes!</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">⚔️</div><div class="ayuda-texto"><strong>!pelea</strong><p>Tú vs El Sistema. El mayor poder gana. Vences y ganas +5 puntos.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🔄</div><div class="ayuda-texto"><strong>!ruleta</strong><p>Gira la ruleta: 🥇 Primero, 🥈 Segundo, 🤡 Payaso, 👑 Rey, 🎉 Fiesta, 💎 Diamante.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🎱</div><div class="ayuda-texto"><strong>!8ball</strong><p>Pregúntale a la bola mágica. Responde sí, no o quizás de formas épicas.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🧠</div><div class="ayuda-texto"><strong>!trivia</strong><p>Responde la pregunta correcta primero y gana +15 puntos.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">✂️</div><div class="ayuda-texto"><strong>!ppt</strong><p>Escribe !piedra, !papel o !tijera. Gana al sistema y suma +8 puntos.</p></div></div>
+        <div class="ayuda-item"><div class="ayuda-icono">🏆</div><div class="ayuda-texto"><strong>!sorteo</strong><p>Escríbelo para entrar. El streamer activa el sorteo y sale un ganador al azar.</p></div></div>
       </div>
     </div>
   </div>

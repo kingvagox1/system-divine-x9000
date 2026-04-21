@@ -223,16 +223,16 @@ function manejarChat(data) {
   const txtLow = data.texto.toLowerCase();
   if (filtros.some(f => txtLow.includes(f))) return;
 
-  const chat = document.getElementById('col-chat');
+  const chat = document.getElementById('chat-mensajes');
   const div  = document.createElement('div');
   div.className = 'msg';
-  const claseRol = data.rol === 'mod' ? 'admin' : (data.rol === 'vip' ? 'vip' : 'normal');
-  const icono    = data.rol === 'mod' ? '🛡️' : (data.rol === 'vip' ? '⭐' : '');
+  const claseRol   = data.rol === 'mod' ? 'admin' : (data.rol === 'vip' ? 'vip' : 'normal');
+  const icono      = data.rol === 'mod' ? '🛡️' : (data.rol === 'vip' ? '⭐' : '');
   const avatarHtml = data.avatar
     ? `<img src="${data.avatar}" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:4px;border:1px solid rgba(255,255,255,0.2)">`
     : '';
-  div.innerHTML  = `${avatarHtml}<span class="user ${claseRol}">${icono} @${data.usuario}:</span> ${data.texto}`;
-  chat.insertBefore(div, chat.children[2] || null); // después del filtro
+  div.innerHTML = `${avatarHtml}<span class="user ${claseRol}">${icono} @${data.usuario}:</span> ${data.texto}`;
+  chat.insertBefore(div, chat.firstChild);
   while (chat.children.length > 55) chat.removeChild(chat.lastChild);
 
   // Guardar historial
