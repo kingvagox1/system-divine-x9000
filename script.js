@@ -266,29 +266,39 @@ function manejarChat(data) {
 }
 
 function manejarJoin(data) {
-  const col   = document.getElementById('col-izq');
+  const col  = document.getElementById('col-izq');
+  const h2   = col.querySelector('h2');
   const aviso = document.createElement('div');
   aviso.className = 'bienvenida';
-  // Mostrar avatar si viene
   const avatarHtml = data.avatar
     ? `<img src="${data.avatar}" style="width:22px;height:22px;border-radius:50%;vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,0.4)">`
     : '';
   aviso.innerHTML = `${avatarHtml}🎉 ${data.nombre.toUpperCase()} 🎉`;
-  col.insertBefore(aviso, col.firstChild);
-  while (col.children.length > 32) col.removeChild(col.lastChild);
+  // Insertar DESPUÉS del h2, no antes
+  if (h2 && h2.nextSibling) {
+    col.insertBefore(aviso, h2.nextSibling);
+  } else {
+    col.appendChild(aviso);
+  }
+  // Limitar a 30 tarjetas (sin contar el h2)
+  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
   hablar(`¡Bienvenido ${data.nombre}! Que disfrutes el live.`);
 }
 
 function manejarFollow(data) {
   const col = document.getElementById('col-izq');
+  const h2  = col.querySelector('h2');
   const div = document.createElement('div');
   div.className = 'follow';
   const avatarHtml = data.avatar
     ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
     : '';
   div.innerHTML = `${avatarHtml}❤️ @${data.nombre} TE SIGUIÓ ❤️`;
-  col.insertBefore(div, col.firstChild);
-  while (col.children.length > 32) col.removeChild(col.lastChild);
+  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
+  else col.appendChild(div);
+  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
 
   mostrarPantalla(`❤️ FOLLOW\n@${data.nombre}`);
   mostrarAlerta(`❤️ @${data.nombre}\nTE SIGUIÓ`);
@@ -298,27 +308,33 @@ function manejarFollow(data) {
 
 function manejarShare(data) {
   const col = document.getElementById('col-izq');
+  const h2  = col.querySelector('h2');
   const div = document.createElement('div');
   div.className = 'follow';
-  div.style.background = 'linear-gradient(135deg, rgba(0,170,255,0.18), rgba(0,240,255,0.15))';
+  div.style.background  = 'linear-gradient(135deg, rgba(0,170,255,0.18), rgba(0,240,255,0.15))';
   div.style.borderColor = 'rgba(0,240,255,0.45)';
   div.style.boxShadow   = '0 0 20px rgba(0,240,255,0.3)';
   div.innerHTML = `🔗 @${data.nombre} COMPARTIÓ EL LIVE 🔗`;
-  col.insertBefore(div, col.firstChild);
-  while (col.children.length > 32) col.removeChild(col.lastChild);
+  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
+  else col.appendChild(div);
+  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
   hablar(`¡${data.nombre} compartió el live! ¡Gracias!`);
 }
 
 function manejarSubscribe(data) {
   const col = document.getElementById('col-izq');
+  const h2  = col.querySelector('h2');
   const div = document.createElement('div');
   div.className = 'follow';
-  div.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,136,0,0.15))';
+  div.style.background  = 'linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,136,0,0.15))';
   div.style.borderColor = 'rgba(255,215,0,0.5)';
   div.style.boxShadow   = '0 0 22px rgba(255,215,0,0.35)';
   div.innerHTML = `⭐ @${data.nombre} SE SUSCRIBIÓ ⭐`;
-  col.insertBefore(div, col.firstChild);
-  while (col.children.length > 32) col.removeChild(col.lastChild);
+  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
+  else col.appendChild(div);
+  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
 
   mostrarPantalla(`⭐ SUSCRIPTOR\n@${data.nombre}`);
   mostrarAlerta(`⭐ @${data.nombre}\n¡SUSCRIPTOR!`);
@@ -327,7 +343,6 @@ function manejarSubscribe(data) {
 }
 
 function manejarGift(data) {
-  // El servidor ya acumula los diamantes, usamos su total
   if (data.totalDiamantes !== undefined) {
     totalDiamantes = data.totalDiamantes;
     document.getElementById('total-diamantes').textContent = totalDiamantes.toLocaleString();
@@ -335,6 +350,7 @@ function manejarGift(data) {
   }
 
   const col = document.getElementById('col-izq');
+  const h2  = col.querySelector('h2');
   const div = document.createElement('div');
   const rareza = data.diamantes >= 1000 ? 'legendario'
                : data.diamantes >= 100  ? 'epico'
@@ -345,8 +361,10 @@ function manejarGift(data) {
     ? `<img src="${data.avatar}" style="width:20px;height:20px;border-radius:50%;vertical-align:middle;margin-right:5px;border:1px solid rgba(255,255,255,0.3)">`
     : '';
   div.innerHTML = `${avatarHtml}🎁 @${data.nombre}<br>${data.cantidad}x ${data.regalo} · 💎${data.diamantes}`;
-  col.insertBefore(div, col.firstChild);
-  while (col.children.length > 32) col.removeChild(col.lastChild);
+  if (h2 && h2.nextSibling) col.insertBefore(div, h2.nextSibling);
+  else col.appendChild(div);
+  const tarjetas = col.querySelectorAll('.bienvenida, .follow, .regalo');
+  if (tarjetas.length > 30) tarjetas[tarjetas.length - 1].remove();
 
   mostrarPantalla(`🎁 ${data.regalo}\nx${data.cantidad}`);
   if (rareza === 'legendario' || rareza === 'epico') {
@@ -474,17 +492,31 @@ function ajustarTamano(cant) {
   document.documentElement.style.setProperty('--tam', tam + 'px');
 }
 
-// ─── VOZ ──────────────────────────────────────────────────────────────────────
+// ─── VOZ CON COLA ─────────────────────────────────────────────────────────────
+let colaVoz = [];
+let hablandoAhora = false;
+
 function hablar(texto) {
   if (mutado) return;
-  const corto = texto.length > 120 ? texto.substring(0, 120) + '...' : texto;
-  const voz   = new SpeechSynthesisUtterance(corto);
+  const corto = texto.length > 100 ? texto.substring(0, 100) + '...' : texto;
+  document.getElementById('texto-voz').innerText = corto;
+
+  // Agregar a la cola (máximo 3 mensajes pendientes para no acumular)
+  if (colaVoz.length < 3) colaVoz.push(corto);
+  procesarColaVoz();
+}
+
+function procesarColaVoz() {
+  if (hablandoAhora || colaVoz.length === 0) return;
+  hablandoAhora = true;
+  const texto = colaVoz.shift();
+  const voz   = new SpeechSynthesisUtterance(texto);
   voz.lang    = 'es-MX';
   voz.volume  = 1;
-  voz.rate    = 0.95;
-  window.speechSynthesis.cancel();
+  voz.rate    = 1.0;
+  voz.onend   = () => { hablandoAhora = false; procesarColaVoz(); };
+  voz.onerror = () => { hablandoAhora = false; procesarColaVoz(); };
   window.speechSynthesis.speak(voz);
-  document.getElementById('texto-voz').innerText = corto;
 }
 
 function toggleMute() {
@@ -492,7 +524,11 @@ function toggleMute() {
   const btn = document.getElementById('btn-mute');
   btn.textContent = mutado ? '🔇' : '🔊';
   btn.classList.toggle('muted', mutado);
-  if (mutado) window.speechSynthesis.cancel();
+  if (mutado) {
+    window.speechSynthesis.cancel();
+    colaVoz = [];
+    hablandoAhora = false;
+  }
 }
 
 // ─── CONTADOR REGRESIVO ───────────────────────────────────────────────────────
