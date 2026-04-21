@@ -6,10 +6,14 @@ const { WebcastPushConnection } = require('tiktok-live-connector');
 const app    = express();
 const server = http.createServer(app);
 const io     = new Server(server, {
-  cors: { origin: '*' },
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  },
+  allowEIO3: true,
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ['websocket', 'polling']
+  transports: ['polling', 'websocket']
 });
 
 // ─── Archivos estáticos ────────────────────────────────────────────────────────

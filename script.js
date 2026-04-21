@@ -106,7 +106,14 @@ function actualizarGrafica() {
 }
 
 // ─── SOCKET.IO ────────────────────────────────────────────────────────────────
-const socket = io();
+// Usar polling primero para Railway, luego upgrade a websocket
+const socket = io({
+  transports: ['polling', 'websocket'],
+  upgrade: true,
+  reconnection: true,
+  reconnectionAttempts: 10,
+  reconnectionDelay: 2000
+});
 
 socket.on('estado', data => {
   const dot = document.getElementById('estado-dot');
