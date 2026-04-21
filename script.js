@@ -111,23 +111,34 @@ const socket = io();
 socket.on('estado', data => {
   const dot = document.getElementById('estado-dot');
   const txt = document.getElementById('estado-txt');
+  const btnDesc = document.getElementById('btn-desconectar');
+  const reconDiv = document.getElementById('reconectando');
+
   if (data.conectado) {
     dot.textContent = '🟢';
     txt.textContent = `LIVE @${data.usuario}`;
     txt.classList.add('online');
     document.getElementById('cab-titulo').textContent = `⚡ @${data.usuario.toUpperCase()} ⚡`;
     document.title = `@${data.usuario} — LIVE`;
-    document.getElementById('btn-desconectar').style.display = 'inline-block';
+    btnDesc.style.display = 'inline-block';
+    reconDiv.style.display = 'none';
     hablar(`¡Conectado al live de ${data.usuario}! Sistema divine activado.`);
     sonar('conectar');
   } else {
     dot.textContent = '🔴';
-    txt.textContent = 'OFFLINE';
+    txt.textContent = data.error ? `ERROR` : 'OFFLINE';
     txt.classList.remove('online');
     document.getElementById('cab-titulo').textContent = '⚡ SYSTEM DIVINE X-9000 ⚡';
     document.title = 'SYSTEM DIVINE X-9000';
-    document.getElementById('btn-desconectar').style.display = 'none';
-    if (data.error) hablar(`Error de conexión: ${data.error}`);
+    btnDesc.style.display = 'none';
+    reconDiv.style.display = 'none';
+    if (data.error) {
+      hablar(`${data.error}`);
+      // Mostrar error en la barra de voz con color rojo
+      const el = document.getElementById('texto-voz');
+      if (el) { el.innerText = `⚠️ ${data.error}`; el.style.color = '#FF3366'; }
+      setTimeout(() => { if (el) el.style.color = ''; }, 5000);
+    }
   }
 });
 
@@ -161,7 +172,9 @@ socket.on('evento', data => {
 socket.on('reconectando', data => {
   document.getElementById('estado-dot').textContent = '🟡';
   document.getElementById('estado-txt').textContent = `RECONECTANDO ${data.intento}/${data.max}`;
+  document.getElementById('estado-txt').classList.remove('online');
   document.getElementById('reconectando').style.display = 'flex';
+  document.getElementById('btn-desconectar').style.display = 'none';
 });
 
 socket.on('streamEnd', data => {
@@ -228,18 +241,28 @@ function sonar(tipo) {
 function conectarTikTok() {
   const input = document.getElementById('input-usuario');
   const user  = input.value.trim().replace('@', '');
-  if (!user) return;
+  if (!user) {
+    hablar('Escribe un usuario de TikTok primero');
+    return;
+  }
+  // Mostrar estado de carga
+  document.getElementById('estado-dot').textContent = '🟡';
+  document.getElementById('estado-txt').textContent = 'CONECTANDO...';
+  document.getElementById('reconectando').style.display = 'flex';
   socket.emit('cambiarUsuario', user);
   hablar(`Conectando al live de ${user}...`);
 }
 
 function desconectar() {
-  socket.emit('desconectar');
+  // Primero actualizar UI, luego avisar al servidor
   document.getElementById('estado-dot').textContent = '🔴';
   document.getElementById('estado-txt').textContent = 'OFFLINE';
   document.getElementById('estado-txt').classList.remove('online');
   document.getElementById('cab-titulo').textContent = '⚡ SYSTEM DIVINE X-9000 ⚡';
   document.getElementById('btn-desconectar').style.display = 'none';
+  document.getElementById('reconectando').style.display = 'none';
+  document.title = 'SYSTEM DIVINE X-9000';
+  socket.emit('desconectar');
 }
 
 // ─── MANEJADORES TIKTOK ───────────────────────────────────────────────────────
