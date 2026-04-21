@@ -173,6 +173,19 @@ socket.on('error_tiktok', data => {
   console.warn('Error TikTok:', data.mensaje);
 });
 
+// Cuando un cliente se reconecta, recibe el historial reciente
+socket.on('historial', eventos => {
+  eventos.forEach(data => {
+    switch (data.tipo) {
+      case 'chat':   manejarChat(data);   break;
+      case 'join':   manejarJoin(data);   break;
+      case 'follow': manejarFollow(data); break;
+      case 'gift':   manejarGift(data);   break;
+      case 'share':  manejarShare(data);  break;
+    }
+  });
+});
+
 // ─── SONIDOS ──────────────────────────────────────────────────────────────────
 let audioCtx = null;
 
